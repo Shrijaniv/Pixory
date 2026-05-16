@@ -130,9 +130,9 @@ export function useProcessingState() {
 
       setProgress(50);
       // 6. Backend scoring (OpenCV sharpness + face detection via Python sidecar)
-      // Sends top 60 candidates as 512px thumbnails to /api/score_photos.
+      // Sends top 120 candidates as 512px thumbnails to /api/score_photos.
       // Falls back silently to file-size ranking if the backend is unreachable.
-      let visionScored = await scoreWithBackend(dedupedPhotos, store.backendUrl, { candidateLimit: 60, onProgress: push, contentMix: store.contentMix, persona: store.persona });
+      let visionScored = await scoreWithBackend(dedupedPhotos, store.backendUrl, { candidateLimit: 120, onProgress: push, contentMix: store.contentMix, persona: store.persona });
       if (cancelled.current) return;
 
       // 7. Face identity filter (optional — only when user has set up identity + toggle is on)
@@ -183,7 +183,7 @@ export function useProcessingState() {
           }
         }
 
-        // Also drop photos with no face data (ranked below top 60, never sent to sidecar)
+        // Also drop photos with no face data (ranked below top 120, never sent to sidecar)
         // — we can't verify whether the user appears in them, so exclude from both
         // selection and runner-ups to prevent other people's faces slipping through.
         const beforeUnscoredFilter = visionScored.length;

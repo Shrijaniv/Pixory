@@ -92,7 +92,7 @@ export async function scoreWithBackend(
     persona?: PersonaType | null;
   } = {},
 ): Promise<LocalPhoto[]> {
-  const { candidateLimit = 60, onProgress } = options;
+  const { candidateLimit = 120, onProgress } = options;
 
   if (!backendUrl) {
     onProgress?.('⚠ No backend URL — using file-size ranking only');
@@ -149,7 +149,7 @@ export async function scoreWithBackend(
       const visionScore = computePersonaScore(score, persona);
       candidates[i] = {
         ...candidates[i],
-        qualityScore: candidates[i].qualityScore * (0.4 + visionScore * 0.6),
+        qualityScore: candidates[i].qualityScore * (0.2 + visionScore * 0.8),
         faceCount: score.face_count,
       };
       if (score.face_count > 0) { photosWithFaces++; totalFaces += score.face_count; }
