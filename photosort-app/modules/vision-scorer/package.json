@@ -1,0 +1,9 @@
+{
+  "name": "vision-scorer",
+  "version": "1.0.0",
+  "description": "iOS Vision framework scoring for Pixory",
+  "main": "index",
+  "peerDependencies": {
+    "expo-modules-core": "*"
+  }
+}

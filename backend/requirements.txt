@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+instagrapi
+opencv-python
+numpy
+deepface
+tf-keras

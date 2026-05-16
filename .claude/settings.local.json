@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pkill -f \"publish_sidecar\")",
+      "Bash(pkill -f \"node.*backend\")",
+      "Bash(pkill -f \"tsx.*index\")",
+      "Bash(pkill -f \"cloudflared\")",
+      "Bash(pkill -f \"expo\")",
+      "Bash(python3 publish_sidecar.py)",
+      "Bash(echo \"Sidecar PID: $!\")",
+      "Bash(curl -s http://127.0.0.1:8001/health)",
+      "Bash(npm run *)",
+      "Bash(echo \"Backend PID: $!\")",
+      "Bash(curl -s http://localhost:8000/health)",
+      "Bash(cloudflared tunnel *)",
+      "Read(//private/tmp/**)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}

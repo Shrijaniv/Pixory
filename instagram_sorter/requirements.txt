@@ -1,0 +1,28 @@
+# Mobile UI
+kivy>=2.3.0
+plyer>=2.1.0          # native device APIs (camera, notifications)
+
+# Image processing
+Pillow>=10.0.0
+opencv-python>=4.8.0
+imagehash>=4.3.1
+piexif>=1.1.3
+
+# AI / ML
+openai>=1.30.0
+anthropic>=0.25.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+
+# Instagram publishing
+instagrapi>=2.0.0
+
+# Geocoding (free, no API key needed)
+geopy>=2.4.0
+
+# Config
+python-dotenv>=1.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-mock>=3.12.0
