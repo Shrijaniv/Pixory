@@ -1,0 +1,27 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#000' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#222' },
+  cancel: { color: '#FFF', fontSize: 16 },
+  headerTitle: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+  loaderSection: { alignItems: 'center', paddingVertical: 36, gap: 14 },
+  loaderRing: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#222' },
+  progressPct: { position: 'absolute', bottom: 6, color: '#0095F6', fontSize: 11, fontWeight: '700' },
+  progressBarTrack: { width: 200, height: 3, backgroundColor: '#222', borderRadius: 2, overflow: 'hidden' },
+  progressBarFill: { height: '100%', backgroundColor: '#0095F6', borderRadius: 2 },
+  loaderLabel: { color: '#8E8E8E', fontSize: 14 },
+  errorBox: { margin: 20, padding: 24, backgroundColor: '#1A0000', borderRadius: 12, alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#FF3B3B44' },
+  errorTitle: { color: '#FFF', fontSize: 17, fontWeight: '600' },
+  errorMsg: { color: '#8E8E8E', fontSize: 13, textAlign: 'center', lineHeight: 18 },
+  retryBtn: { marginTop: 8, backgroundColor: '#222', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 8 },
+  retryText: { color: '#FFF', fontWeight: '600', fontSize: 14 },
+  stepsScroll: { flex: 1 },
+  stepsContent: { paddingHorizontal: 20, paddingVertical: 8, gap: 12 },
+  stepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  stepDot: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#0095F6', alignItems: 'center', justifyContent: 'center', marginTop: 1, flexShrink: 0 },
+  stepDotDone: { backgroundColor: '#0095F6', borderColor: '#0095F6' },
+  stepCheck: { color: '#FFF', fontSize: 12, fontWeight: '700', lineHeight: 16 },
+  stepText: { color: '#FFF', fontSize: 14, flex: 1, lineHeight: 22 },
+  stepTextDone: { color: '#555' },
+});

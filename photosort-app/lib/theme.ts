@@ -13,7 +13,7 @@ export const Colors = {
   // Gradients (use with expo-linear-gradient)
   gradientStart:  '#B7004F',
   gradientEnd:    '#0061A3',
-  igGradient:     ['#f09433', '#e6683c', '#dc2743', '#cc2366', '#bc1888'] as string[],
+  igGradient:     ['#f09433', '#e6683c', '#dc2743', '#cc2366', '#bc1888'] as const,
 
   // Surfaces
   bg:             '#FAF9F9',

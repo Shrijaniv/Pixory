@@ -4,7 +4,9 @@ import type { LocalPhoto } from '../../store/state';
 function photo(id: string, creationTime: number, quality = 0.5): LocalPhoto {
   return {
     id,
+    uri: `ph://${id}`,
     localUri: `file://${id}.jpg`,
+    filename: `${id}.jpg`,
     creationTime,
     qualityScore: quality,
     fileSize: 1000,

@@ -10,7 +10,9 @@ function photo(
 ): LocalPhoto {
   return {
     id,
+    uri: `ph://${id}`,
     localUri: `file://${id}.jpg`,
+    filename: `${id}.jpg`,
     creationTime,
     qualityScore: quality,
     fileSize: 1000,

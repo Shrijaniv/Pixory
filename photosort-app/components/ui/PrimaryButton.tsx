@@ -62,7 +62,7 @@ export default function PrimaryButton({
         style={{ opacity: isDisabled ? 0.5 : 1 }}
       >
         <LinearGradient
-          colors={Colors.igGradient as string[]}
+          colors={Colors.igGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.btn}
