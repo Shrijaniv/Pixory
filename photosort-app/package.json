@@ -6,7 +6,23 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "testEnvironment": "node",
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|expo-modules-core|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|expo-linear-gradient|expo-blur|react-native-reanimated|@shopify)/)"
+    ],
+    "testMatch": ["**/__tests__/**/*.test.ts"],
+    "moduleNameMapper": {
+      "^expo-image-manipulator$": "<rootDir>/__mocks__/expo-image-manipulator.js",
+      "^expo-file-system(/legacy)?$": "<rootDir>/__mocks__/expo-file-system.js",
+      "^expo-media-library$": "<rootDir>/__mocks__/expo-media-library.js",
+      "^expo-location$": "<rootDir>/__mocks__/expo-location.js"
+    }
   },
   "dependencies": {
     "@expo/ngrok": "^4.1.0",
@@ -38,7 +54,11 @@
     "react-native-web": "^0.21.0"
   },
   "devDependencies": {
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.3.3",
     "@types/react": "~19.1.0",
+    "jest": "^29.7.0",
+    "jest-expo": "^55.0.17",
     "typescript": "~5.9.2"
   },
   "private": true

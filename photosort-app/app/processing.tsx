@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { curateDevicePhotos, matchFaces } from '../lib/api';
-import { loadIdentity } from '../lib/faceIdentity';
+import { loadIdentity } from '../lib/identity';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { clusterSummary, deduplicateBursts, filterByLocation, getPhotos, requestPermission, scoreWithBackend, selectBestPhotos, topCandidates } from '../lib/photoLibrary';
+import { clusterSummary, deduplicateBursts, filterByLocation, getPhotos, requestPermission, scoreWithBackend, selectBestPhotos, topCandidates } from '../lib/photos';
 import { Caption, LocalPhoto, saveSession, store } from '../lib/store';
 
 interface Step { id: string; message: string; done: boolean; }

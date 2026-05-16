@@ -19,7 +19,7 @@ import {
   clearIdentity,
   loadIdentity,
   saveIdentity,
-} from '../lib/faceIdentity';
+} from '../lib/identity';
 import { store } from '../lib/store';
 
 type Status = 'loading' | 'idle' | 'processing' | 'success' | 'error';

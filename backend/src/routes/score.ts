@@ -1,23 +1,18 @@
-import { FastifyInstance } from "fastify";
+/**
+ * Score route — proxies photo scoring to the Python sidecar (OpenCV + DeepFace).
+ */
+import type { FastifyInstance } from 'fastify';
+import { fetchSidecar } from '../services/sidecarClient';
 
-const SIDECAR_URL = "http://127.0.0.1:8001";
-
-export async function scoreRoutes(fastify: FastifyInstance) {
-  // Proxy POST /api/score_photos → Python sidecar /score_photos
-  fastify.post("/api/score_photos", async (req, reply) => {
+export async function scoreRoutes(app: FastifyInstance) {
+  // POST /api/score_photos → Python sidecar /score_photos
+  app.post('/api/score_photos', async (req, reply) => {
     try {
-      const resp = await fetch(`${SIDECAR_URL}/score_photos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(req.body),
-      });
-      if (!resp.ok) {
-        const text = await resp.text();
-        return reply.status(502).send({ error: `Sidecar error: ${text}` });
-      }
-      return reply.send(await resp.json());
-    } catch (err: any) {
-      return reply.status(503).send({ error: `Scoring sidecar unavailable: ${err?.message}` });
+      const result = await fetchSidecar('/score_photos', req.body, 120_000);
+      return reply.send(result);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      return reply.status(503).send({ error: `Scoring sidecar unavailable: ${message}` });
     }
   });
 }

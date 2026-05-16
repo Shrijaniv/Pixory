@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import DatePickerModal from '../components/DatePickerModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { hasIdentity, FaceIdentity, loadIdentity } from '../lib/faceIdentity';
+import { hasIdentity, FaceIdentity, loadIdentity } from '../lib/identity';
 import { clearSession, loadPersistedPrefs, loadSession, persistPrefs, PersonaType, store } from '../lib/store';
 
 const METHODS = [
