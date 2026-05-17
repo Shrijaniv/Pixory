@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, ScrollView } from 'react-native';
 import { curateDevicePhotos, matchFaces } from '../../../lib/api';
 import { loadIdentity } from '../../../lib/identity';
+import { learningInsight, loadLearningHistory } from '../../../lib/learning';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { clusterSummary, deduplicateBursts, filterByLocation, getPhotos, requestPermission, scoreWithBackend, selectBestPhotos, topCandidates } from '../../../lib/photos';
@@ -33,6 +34,12 @@ export function useProcessingState() {
     try {
       // 1. Permissions
       push('Requesting photo library access...', 2);
+
+      // Show learning insight if enough history exists for this persona
+      const learningHistory = await loadLearningHistory();
+      const personaKey = store.persona ?? 'default';
+      const insight = learningInsight(learningHistory[personaKey]);
+      if (insight) push(`✦ ${insight}`);
       const { granted, limited } = await requestPermission();
       if (!granted) throw new Error('Photo library permission denied. Please enable it in Settings → Privacy → Photos.');
       if (limited) {

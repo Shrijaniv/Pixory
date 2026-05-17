@@ -2,6 +2,7 @@
  * Photo quality scoring — per-persona formula + backend sidecar integration.
  */
 import * as ImageManipulator from 'expo-image-manipulator';
+import { computeLearningBias, loadLearningHistory } from '../learning';
 import { ContentMix, LocalPhoto, PersonaType } from '../store/state';
 
 export interface BackendPhotoScore {
@@ -143,15 +144,31 @@ export async function scoreWithBackend(
     const persona = options.persona ?? null;
     let totalFaces = 0, happyFaces = 0, photosWithFaces = 0;
 
+    // Load learning history once for the whole batch
+    const learningHistory = await loadLearningHistory();
+
     for (const score of data.scores) {
       const i = score.index;
       if (i < 0 || i >= candidates.length) continue;
       const visionScore = computePersonaScore(score, persona);
+
+      // Store vision metrics on the photo so review-screen edits can be learned from
       candidates[i] = {
         ...candidates[i],
-        qualityScore: candidates[i].qualityScore * (0.2 + visionScore * 0.8),
-        faceCount: score.face_count,
+        faceCount:         score.face_count,
+        happyFaceCount:    score.happy_face_count,
+        sharpness:         score.sharpness,
+        brightnessQuality: score.brightness_quality,
+        contrast:          score.contrast,
+        saturation:        score.saturation,
+        complexity:        score.complexity,
       };
+
+      // Apply persona formula, then nudge with learning bias
+      const baseScore    = candidates[i].qualityScore * (0.2 + visionScore * 0.8);
+      const learningBias = computeLearningBias(candidates[i], persona, learningHistory);
+      candidates[i] = { ...candidates[i], qualityScore: baseScore * learningBias };
+
       if (score.face_count > 0) { photosWithFaces++; totalFaces += score.face_count; }
       happyFaces += score.happy_face_count ?? 0;
     }

@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { assignRoles } from '../../../lib/api';
+import { recordOutcome } from '../../../lib/learning';
 import { LocalPhoto, StoryRole, store } from '../../../lib/store';
 import { MAX_CAROUSEL, SelectedItem } from './types';
 
@@ -17,6 +18,9 @@ export function useReviewState() {
   const reorganizeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reorganizeAbort = useRef<AbortController | null>(null);
   const mountedRef = useRef(false); // skip re-label on initial load
+  // Snapshot of the AI's original selection — used to distinguish "rejected AI pick"
+  // from "deselected something the user themselves added"
+  const initialSelectionRef = useRef<Set<string>>(new Set());
 
   // Cancel any pending timer + in-flight request when unmounting or navigating away
   useEffect(() => {
@@ -29,6 +33,8 @@ export function useReviewState() {
   useEffect(() => {
     setSelected(store.selectedPhotos.map((uri, i) => ({ localUri: uri, order: i + 1 })));
     setRunnerUps([...store.runnerUpPhotos]);
+    // Snapshot the initial AI selection so we can detect user rejections later
+    initialSelectionRef.current = new Set(store.selectedPhotos);
     // Allow the re-label effect to fire after this initial load
     setTimeout(() => { mountedRef.current = true; }, 100);
   }, []);
@@ -144,13 +150,21 @@ export function useReviewState() {
         .map((p) => ({ ...p, order: p.order > target.order ? p.order - 1 : p.order }));
     });
     const photo = store.localPhotos.find((p) => p.localUri === uri);
-    if (photo) setRunnerUps((prev) => [photo, ...prev.filter((p) => p.localUri !== uri)]);
+    if (photo) {
+      setRunnerUps((prev) => [photo, ...prev.filter((p) => p.localUri !== uri)]);
+      // Record as a rejection only if the algorithm/AI originally selected this photo
+      if (initialSelectionRef.current.has(uri)) {
+        recordOutcome(photo, 'rejected', store.persona);
+      }
+    }
   }
 
   function promote(photo: LocalPhoto) {
     if (selected.length >= MAX_CAROUSEL) { showToast('Deselect a photo above first (max 10)'); return; }
     setSelected((prev) => [...prev, { localUri: photo.localUri, order: prev.length + 1 }]);
     setRunnerUps((prev) => prev.filter((p) => p.localUri !== photo.localUri));
+    // Record as a promotion — user explicitly chose something the algorithm deprioritised
+    recordOutcome(photo, 'promoted', store.persona);
   }
 
   function moveUp(index: number) {

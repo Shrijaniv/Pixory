@@ -20,10 +20,17 @@ export interface LocalPhoto {
   lon?: number;
   width: number;
   height: number;
-  fileSize?: number;    // bytes on disk — proxy for sharpness/detail
+  fileSize?: number;      // bytes on disk — proxy for sharpness/detail
   qualityScore: number;
-  faceCount?: number;   // faces detected by sidecar (set by scoreWithBackend)
-  isFavorite?: boolean; // marked as favourite in iOS Photos
+  faceCount?: number;     // faces detected by sidecar (set by scoreWithBackend)
+  happyFaceCount?: number;
+  isFavorite?: boolean;   // marked as favourite in iOS Photos
+  // Vision metric fields — populated by scoreWithBackend, used for self-learning
+  sharpness?: number;
+  brightnessQuality?: number;
+  contrast?: number;
+  saturation?: number;
+  complexity?: number;
 }
 
 export type ContentMix = 'people' | 'balanced' | 'places';
