@@ -5,7 +5,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { ANTHROPIC_API_KEY, CLAUDE_VISION_MODEL, OPENAI_API_KEY, OPENAI_VISION_MODEL } from '../config';
-import type { AssignRolesResult, CurateResult, FaceProfile, PhotoRole } from '../types/curateTypes';
+import type { AssignRolesResult, CurateResult, FaceProfile, PhotoMetadata, PhotoRole } from '../types/curateTypes';
 import { buildRolePrompt, buildSystemPrompt } from './promptBuilder';
 
 // ── Response parsers ──────────────────────────────────────────────────────────
@@ -78,14 +78,28 @@ export async function curateWithClaude(
   favoriteIndices?: number[],
   contentMix?: string,
   persona?: string,
+  userFaceB64?: string,
+  photoMetadata?: PhotoMetadata[],
 ): Promise<Omit<CurateResult, 'success'>> {
   const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
   const content: Anthropic.MessageParam['content'] = [];
 
+  // Send the user's reference face FIRST so it's the clearest anchor for the AI.
+  if (userFaceB64) {
+    content.push({ type: 'text', text: '--- REFERENCE PHOTO — THE USER ---\nThis is the person who is posting. If a candidate photo contains faces, this person must be present or the photo must be excluded.' });
+    content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: userFaceB64 } });
+    content.push({ type: 'text', text: '--- END REFERENCE — CANDIDATE PHOTOS FOLLOW ---' });
+  }
+
   for (let i = 0; i < photos.length; i++) {
     content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: photos[i] } });
-    const favTag = favoriteIndices?.includes(i) ? ' ♥ FAVORITED' : '';
-    content.push({ type: 'text', text: `Photo ${i}: ${names[i] ?? `photo_${i}`}${favTag}` });
+    const meta = photoMetadata?.[i];
+    const tags = [
+      meta?.shot_type ? `[${meta.shot_type.toUpperCase()}]` : '',
+      meta?.group_size && meta.group_size !== 'none' ? `[${meta.group_size.toUpperCase()}]` : '',
+      favoriteIndices?.includes(i) ? '[♥ FAVORITED]' : '',
+    ].filter(Boolean).join(' ');
+    content.push({ type: 'text', text: `Photo ${i}: ${names[i] ?? `photo_${i}`}${tags ? ` ${tags}` : ''}` });
   }
 
   if (faceProfiles && faceProfiles.length > 0) {
@@ -98,7 +112,7 @@ export async function curateWithClaude(
 
   content.push({
     type: 'text',
-    text: buildSystemPrompt(photos.length, maxSelect, vibe, faceProfiles, favoriteIndices, contentMix, persona),
+    text: buildSystemPrompt(photos.length, maxSelect, vibe, faceProfiles, favoriteIndices, contentMix, persona, !!userFaceB64),
   });
 
   const response = await client.messages.create({
@@ -122,14 +136,28 @@ export async function curateWithOpenAI(
   favoriteIndices?: number[],
   contentMix?: string,
   persona?: string,
+  userFaceB64?: string,
+  photoMetadata?: PhotoMetadata[],
 ): Promise<Omit<CurateResult, 'success'>> {
   const client = new OpenAI({ apiKey: OPENAI_API_KEY });
   const imageContent: OpenAI.Chat.ChatCompletionContentPart[] = [];
 
+  // Send the user's reference face FIRST so it's the clearest anchor for the AI.
+  if (userFaceB64) {
+    imageContent.push({ type: 'text', text: '--- REFERENCE PHOTO — THE USER ---\nThis is the person who is posting. If a candidate photo contains faces, this person must be present or the photo must be excluded.' });
+    imageContent.push({ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${userFaceB64}`, detail: 'high' } });
+    imageContent.push({ type: 'text', text: '--- END REFERENCE — CANDIDATE PHOTOS FOLLOW ---' });
+  }
+
   for (let i = 0; i < photos.length; i++) {
     imageContent.push({ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${photos[i]}`, detail: 'low' } });
-    const favTag = favoriteIndices?.includes(i) ? ' ♥ FAVORITED' : '';
-    imageContent.push({ type: 'text', text: `Photo ${i}: ${names[i] ?? `photo_${i}`}${favTag}` });
+    const meta = photoMetadata?.[i];
+    const tags = [
+      meta?.shot_type ? `[${meta.shot_type.toUpperCase()}]` : '',
+      meta?.group_size && meta.group_size !== 'none' ? `[${meta.group_size.toUpperCase()}]` : '',
+      favoriteIndices?.includes(i) ? '[♥ FAVORITED]' : '',
+    ].filter(Boolean).join(' ');
+    imageContent.push({ type: 'text', text: `Photo ${i}: ${names[i] ?? `photo_${i}`}${tags ? ` ${tags}` : ''}` });
   }
 
   if (faceProfiles && faceProfiles.length > 0) {
@@ -142,7 +170,7 @@ export async function curateWithOpenAI(
 
   imageContent.push({
     type: 'text',
-    text: buildSystemPrompt(photos.length, maxSelect, vibe, faceProfiles, favoriteIndices, contentMix, persona),
+    text: buildSystemPrompt(photos.length, maxSelect, vibe, faceProfiles, favoriteIndices, contentMix, persona, !!userFaceB64),
   });
 
   const response = await client.chat.completions.create(

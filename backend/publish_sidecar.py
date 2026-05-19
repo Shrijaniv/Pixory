@@ -153,6 +153,9 @@ class PhotoScore(BaseModel):
     contrast: float           # 0–1, std-dev of luminance normalised [0, 0.314]
     saturation: float         # 0–1, mean HSV saturation
     complexity: float         # 0–1, edge pixel density (low=clean, high=busy)
+    shot_type: str            # 'closeup' | 'medium' | 'wide' — estimated from face bbox area
+    subject_ratio: float      # largest face bbox area / frame area (0–1); 0 for no-face photos
+    group_size: str           # 'none' | 'solo' | 'duo' | 'group' — derived from face_count
 
 
 class ScoreResult(BaseModel):
@@ -252,6 +255,7 @@ def score_photos(req: ScoreRequest):
                     index=item.index, sharpness=0.5, face_count=0, happy_face_count=0,
                     brightness=0.5, brightness_quality=0.5, contrast=0.5,
                     saturation=0.3, complexity=0.3,
+                    shot_type='wide', subject_ratio=0.0, group_size='none',
                 ))
                 continue
 
@@ -265,6 +269,7 @@ def score_photos(req: ScoreRequest):
             # enforce_detection=False returns empty list for no-face photos (landscapes, food)
             face_count = 0
             happy_face_count = 0
+            face_bboxes: list[tuple[int, int, int, int]] = []  # (x, y, w, h)
             try:
                 face_results = DeepFace.analyze(
                     img,
@@ -280,11 +285,53 @@ def score_photos(req: ScoreRequest):
                     1 for f in face_results
                     if f.get('dominant_emotion', '') in _HAPPY_EMOTIONS
                 )
+                # Extract bounding boxes for shot type estimation
+                for f in face_results:
+                    region = f.get('region', {})
+                    w, h = region.get('w', 0), region.get('h', 0)
+                    if w > 0 and h > 0:
+                        face_bboxes.append((region.get('x', 0), region.get('y', 0), w, h))
             except Exception:
                 # Per-photo fallback to Haar cascade (corrupted image, extreme lighting, etc.)
                 detected = _face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
                 face_count = len(detected)
                 happy_face_count = 0
+                face_bboxes = [(int(x), int(y), int(w), int(h)) for (x, y, w, h) in detected]
+
+            # ── Shot type estimation ──────────────────────────────────────
+            img_area = img.shape[0] * img.shape[1]
+            subject_ratio = 0.0
+            shot_type = 'wide'
+            if face_bboxes:
+                largest_face_area = max(w * h for (_, _, w, h) in face_bboxes)
+                subject_ratio = float(largest_face_area / img_area)
+                if subject_ratio > 0.15:
+                    shot_type = 'closeup'   # face dominates the frame
+                elif subject_ratio > 0.04:
+                    shot_type = 'medium'    # person visible with scene context
+                # else: 'wide' — person tiny or face very small in frame
+            else:
+                # No faces — estimate via center-crop edge density as a subject-size proxy
+                hh, ww = gray.shape
+                center = gray[hh // 3: 2 * hh // 3, ww // 3: 2 * ww // 3]
+                center_edges = cv2.Canny(center, 50, 150)
+                full_edges   = cv2.Canny(gray, 50, 150)
+                center_density = (center_edges > 0).sum() / (center_edges.size + 1)
+                full_density   = (full_edges   > 0).sum() / (full_edges.size   + 1)
+                edge_ratio = center_density / (full_density + 1e-6)
+                if edge_ratio > 1.5:
+                    shot_type = 'medium'   # subject concentrated in center
+                subject_ratio = float(min(edge_ratio / 3.0, 1.0))
+
+            # ── Group size ────────────────────────────────────────────────
+            if face_count == 0:
+                group_size = 'none'
+            elif face_count == 1:
+                group_size = 'solo'
+            elif face_count == 2:
+                group_size = 'duo'
+            else:
+                group_size = 'group'
 
             # ── Additional signals (one pass, all from gray + HSV) ──────────
             gray_f = gray.astype(np.float32) / 255.0
@@ -315,6 +362,9 @@ def score_photos(req: ScoreRequest):
                 contrast=contrast,
                 saturation=saturation,
                 complexity=complexity,
+                shot_type=shot_type,
+                subject_ratio=subject_ratio,
+                group_size=group_size,
             ))
 
         except Exception as e:
@@ -324,6 +374,7 @@ def score_photos(req: ScoreRequest):
                 index=item.index, sharpness=0.5, face_count=0, happy_face_count=0,
                 brightness=0.5, brightness_quality=0.5, contrast=0.5,
                 saturation=0.3, complexity=0.3,
+                shot_type='wide', subject_ratio=0.0, group_size='none',
             ))
 
     return ScoreResult(scores=results)

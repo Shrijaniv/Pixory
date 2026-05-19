@@ -31,6 +31,10 @@ export interface LocalPhoto {
   contrast?: number;
   saturation?: number;
   complexity?: number;
+  // Composition signals — populated by scoreWithBackend
+  shotType?: 'closeup' | 'medium' | 'wide';
+  subjectRatio?: number;   // largest face/subject area as fraction of frame (0–1)
+  groupSize?: 'none' | 'solo' | 'duo' | 'group';
 }
 
 export type ContentMix = 'people' | 'balanced' | 'places';
@@ -81,7 +85,7 @@ export const store: AppStore = {
   persona: null,
   method: 'classic',
   contentMix: 'balanced',
-  backendUrl: 'http://localhost:8000',
+  backendUrl: 'https://pixory-backend-production.up.railway.app',
 
   localPhotos: [],
   selectedPhotos: [],

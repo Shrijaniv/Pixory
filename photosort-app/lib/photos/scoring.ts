@@ -15,6 +15,9 @@ export interface BackendPhotoScore {
   contrast: number;
   saturation: number;
   complexity: number;
+  shot_type?: 'closeup' | 'medium' | 'wide';
+  subject_ratio?: number;
+  group_size?: 'none' | 'solo' | 'duo' | 'group';
 }
 
 /**
@@ -31,9 +34,10 @@ export function computePersonaScore(score: BackendPhotoScore, persona: PersonaTy
   const neutral = Math.max(0, score.face_count - happy);
   const effectiveFaces = happy * 1.5 + neutral * 0.5;
 
+  let base: number;
   switch (persona) {
     case 'aesthete':
-      return (
+      base = (
         s          * 0.40 +
         bq         * 0.20 +
         ct         * 0.15 +
@@ -41,40 +45,68 @@ export function computePersonaScore(score: BackendPhotoScore, persona: PersonaTy
         (1 - cpx)  * 0.10 +
         Math.min(effectiveFaces * 0.01, 0.05)
       );
+      break;
     case 'social':
-      return (
+      base = (
         Math.min(effectiveFaces * 0.22, 0.55) +
         s  * 0.20 +
         bq * 0.15 +
         ct * 0.10
       );
+      break;
     case 'logger':
-      return (
-        s                                    * 0.15 +
+      base = (
+        s                                      * 0.15 +
         Math.min(effectiveFaces * 0.10, 0.20) +
-        bq                                   * 0.10 +
-        ct                                   * 0.05 +
+        bq                                     * 0.10 +
+        ct                                     * 0.05 +
         0.35
       );
+      break;
     case 'storyteller':
-      return (
+      base = (
         s  * 0.30 +
         bq * 0.15 +
         ct * 0.15 +
         Math.min(effectiveFaces * 0.08, 0.15) +
         0.15
       );
+      break;
     case 'minimalist':
-      return (
+      base = (
         s          * 0.50 +
         bq         * 0.20 +
         ct         * 0.15 +
         (1 - cpx)  * 0.10 +
         Math.min(effectiveFaces * 0.02, 0.05)
       );
+      break;
     default:
-      return s * 0.35 + Math.min(effectiveFaces * 0.08, 0.15) + 0.25;
+      base = s * 0.35 + Math.min(effectiveFaces * 0.08, 0.15) + 0.25;
   }
+
+  // ── Shot type bonus — applied after base formula ─────────────────────────
+  // Intuitive starting points aligned with persona philosophy; the self-learning
+  // system will refine these over time for individual users.
+  const st = score.shot_type ?? 'wide';
+  let shotBonus = 0;
+  switch (persona) {
+    case 'social':
+      // "Tag me in that one" — face filling the frame is the money shot
+      shotBonus = st === 'closeup' ? 0.10 : st === 'medium' ? 0.03 : -0.02;
+      break;
+    case 'aesthete':
+      // Wide/medium shots have more compositional room and color field
+      shotBonus = st === 'wide' ? 0.05 : st === 'medium' ? 0.03 : -0.03;
+      break;
+    case 'minimalist':
+      // Negative space reads as minimalist; closeups can feel cluttered
+      shotBonus = st === 'wide' ? 0.08 : st === 'medium' ? 0.02 : -0.05;
+      break;
+    // storyteller, logger, default: no shot-type bias — diversity handled at selection level
+  }
+
+  return base + shotBonus;
 }
 
 /**
@@ -162,6 +194,9 @@ export async function scoreWithBackend(
         contrast:          score.contrast,
         saturation:        score.saturation,
         complexity:        score.complexity,
+        shotType:          score.shot_type,
+        subjectRatio:      score.subject_ratio,
+        groupSize:         score.group_size,
       };
 
       // Apply persona formula, then nudge with learning bias

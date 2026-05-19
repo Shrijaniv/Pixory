@@ -5,6 +5,77 @@
 import { LocalPhoto, PersonaType } from '../store/state';
 import { ActivityCluster, buildActivityClusters } from './clusters';
 
+// ── Shot type balance ─────────────────────────────────────────────────────────
+
+type ShotType = 'closeup' | 'medium' | 'wide';
+
+/**
+ * Target shot-type distribution per persona, expressed as counts out of 10 slots.
+ * Scaled proportionally for carousels smaller than 10.
+ */
+const SHOT_TYPE_TARGETS: Record<string, { closeup: number; medium: number; wide: number }> = {
+  social:      { closeup: 5, medium: 3, wide: 2 },
+  aesthete:    { closeup: 1, medium: 4, wide: 5 },
+  minimalist:  { closeup: 1, medium: 2, wide: 2 },  // 5-photo carousel
+  storyteller: { closeup: 3, medium: 4, wide: 3 },
+  logger:      { closeup: 3, medium: 4, wide: 3 },
+  default:     { closeup: 2, medium: 5, wide: 3 },
+};
+
+/**
+ * Fill `needed` slots from `pool` using two-pass shot-type balance.
+ * Pass 1: fill each shot-type bucket up to its proportional target.
+ * Pass 2: fill remaining slots by quality score from whatever's left.
+ *
+ * `alreadySelected` accounts for forced/guaranteed photos already chosen,
+ * so targets are computed relative to the full carousel size.
+ */
+function shotBalancedFill(
+  pool: LocalPhoto[],
+  needed: number,
+  totalCount: number,
+  persona: PersonaType | null | undefined,
+  alreadySelected: LocalPhoto[],
+): LocalPhoto[] {
+  if (needed <= 0 || pool.length === 0) return [];
+
+  const target = SHOT_TYPE_TARGETS[persona ?? 'default'] ?? SHOT_TYPE_TARGETS.default;
+  const sorted = [...pool].sort((a, b) => b.qualityScore - a.qualityScore);
+
+  // Partition into buckets (score order preserved within each bucket)
+  const buckets: Record<ShotType, LocalPhoto[]> = { closeup: [], medium: [], wide: [] };
+  for (const p of sorted) {
+    const st = (p.shotType ?? 'wide') as ShotType;
+    buckets[st].push(p);
+  }
+
+  // Count what's already selected per shot type
+  const counts: Record<ShotType, number> = { closeup: 0, medium: 0, wide: 0 };
+  for (const p of alreadySelected) {
+    const st = (p.shotType ?? 'wide') as ShotType;
+    counts[st]++;
+  }
+
+  const selected: LocalPhoto[] = [];
+
+  // Pass 1: fill each bucket up to its proportional share of the total carousel
+  for (const st of ['closeup', 'medium', 'wide'] as ShotType[]) {
+    const totalTarget = Math.round((target[st] / 10) * totalCount);
+    const stillNeeded = Math.max(0, totalTarget - counts[st]);
+    const toAdd = buckets[st].splice(0, Math.min(stillNeeded, buckets[st].length));
+    selected.push(...toAdd);
+  }
+
+  // Pass 2: fill remaining by quality from whatever's left across all buckets
+  const overflow = [...buckets.closeup, ...buckets.medium, ...buckets.wide]
+    .sort((a, b) => b.qualityScore - a.qualityScore);
+  while (selected.length < needed && overflow.length > 0) {
+    selected.push(overflow.shift()!);
+  }
+
+  return selected;
+}
+
 /**
  * Select top `count` candidates to send to the AI for final curation.
  *
@@ -57,18 +128,17 @@ export function topCandidates(
     }
   }
 
-  // Step 2: Fill remaining slots with best clusters overall
+  // Step 2: Fill remaining slots using shot-type balanced selection
   const byQuality = [...clusters].sort((a, b) => b.bestQuality - a.bestQuality);
-  for (const cluster of byQuality) {
-    if (selected.length >= count) break;
-    if (!selectedIds.has(cluster.bestPhoto.id)) {
-      selected.push(cluster.bestPhoto);
-      selectedIds.add(cluster.bestPhoto.id);
-    }
-  }
+  const pool = byQuality
+    .flatMap((c) => c.photos)
+    .filter((p) => !selectedIds.has(p.id))
+    .sort((a, b) => b.qualityScore - a.qualityScore);
 
-  // Step 3: Fill remaining slots proportionally to cluster size
-  fillProportionally(selected, selectedIds, byQuality, count);
+  const filled = shotBalancedFill(pool, count - selected.length, count, persona, selected);
+  for (const p of filled) {
+    if (!selectedIds.has(p.id)) { selected.push(p); selectedIds.add(p.id); }
+  }
 
   // Storyteller diversity bonus: sole representative of a cluster gets +10%
   if (persona === 'storyteller') {
@@ -135,17 +205,16 @@ export function selectBestPhotos(
     if (photo) { selectedPhotos.push(photo); selectedIds.add(photo.id); }
   }
 
-  // Second: best-cluster photos
-  for (const cluster of clustersByQuality) {
-    if (selectedPhotos.length >= maxCount) break;
-    if (!selectedIds.has(cluster.bestPhoto.id)) {
-      selectedPhotos.push(cluster.bestPhoto);
-      selectedIds.add(cluster.bestPhoto.id);
-    }
-  }
+  // Second: fill remaining slots using shot-type balanced selection
+  const pool = clustersByQuality
+    .flatMap((c) => c.photos)
+    .filter((p) => !selectedIds.has(p.id))
+    .sort((a, b) => b.qualityScore - a.qualityScore);
 
-  // Third: fill proportionally
-  fillProportionally(selectedPhotos, selectedIds, clustersByQuality, maxCount);
+  const filled = shotBalancedFill(pool, maxCount - selectedPhotos.length, maxCount, null, selectedPhotos);
+  for (const p of filled) {
+    if (!selectedIds.has(p.id)) { selectedPhotos.push(p); selectedIds.add(p.id); }
+  }
 
   const selected  = selectedPhotos.sort((a, b) => a.creationTime - b.creationTime);
   const runnerUps = sorted
@@ -157,59 +226,6 @@ export function selectBestPhotos(
 }
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
-
-function fillProportionally(
-  selected: LocalPhoto[],
-  selectedIds: Set<string>,
-  byQuality: ActivityCluster[],
-  count: number,
-): void {
-  const slotsLeft = count - selected.length;
-  const total     = byQuality.reduce((s, c) => s + c.photos.length, 0);
-  if (slotsLeft <= 0 || total === 0) return;
-
-  const quotas = byQuality.map((cluster) => ({
-    cluster,
-    quota: Math.max(1, Math.round((cluster.photos.length / total) * slotsLeft)),
-    drawn: 0,
-  }));
-
-  // Honour-quota pass
-  let madeProgress = true;
-  while (selected.length < count && madeProgress) {
-    madeProgress = false;
-    for (const item of quotas) {
-      if (selected.length >= count) break;
-      if (item.drawn >= item.quota) continue;
-      const next = item.cluster.photos
-        .filter((p) => !selectedIds.has(p.id))
-        .sort((a, b) => b.qualityScore - a.qualityScore)[0];
-      if (next) {
-        selected.push(next);
-        selectedIds.add(next.id);
-        item.drawn++;
-        madeProgress = true;
-      }
-    }
-  }
-
-  // Overflow pass
-  madeProgress = true;
-  while (selected.length < count && madeProgress) {
-    madeProgress = false;
-    for (const item of quotas) {
-      if (selected.length >= count) break;
-      const next = item.cluster.photos
-        .filter((p) => !selectedIds.has(p.id))
-        .sort((a, b) => b.qualityScore - a.qualityScore)[0];
-      if (next) {
-        selected.push(next);
-        selectedIds.add(next.id);
-        madeProgress = true;
-      }
-    }
-  }
-}
 
 function applyDiversityBonus(selected: LocalPhoto[], clusters: ActivityCluster[]): void {
   const clusterRepCount = new Map<string, number>();

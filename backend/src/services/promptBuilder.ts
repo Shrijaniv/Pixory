@@ -72,6 +72,7 @@ export function buildSystemPrompt(
   favoriteIndices: number[] | undefined,
   contentMix?: string,
   persona?: string,
+  hasUserFace?: boolean,
 ): string {
   const personaClause = buildPersonaClause(persona, maxSelect);
 
@@ -79,6 +80,16 @@ export function buildSystemPrompt(
     ? persona
       ? `\n\nThe story the user wants to tell this time: "${vibe}". Let this shape the narrative arc and caption copy.`
       : `\n\nThe user's requested vibe/theme is: "${vibe}". This is the most important selection criterion — actively prefer photos that match this mood, subject matter, lighting style, or aesthetic. Reject otherwise-good photos that clearly clash with the vibe.`
+    : '';
+
+  // User face identity clause — stronger than a generic face profile preference.
+  // The reference photo was sent as the FIRST image in the message, labeled "REFERENCE PHOTO".
+  const userFaceClause = hasUserFace
+    ? `\n\n━━ USER FACE FILTER ━━\n` +
+      `The FIRST image you received (labeled "REFERENCE PHOTO — THE USER") is a reference photo of the person who is posting this carousel. ` +
+      `STRICT RULE: Any candidate photo that contains visible human faces MUST include this person. ` +
+      `If a photo shows other people's faces but the user is clearly absent, DO NOT select it. ` +
+      `Photos with no faces at all (landscapes, food, objects) are always eligible regardless of this rule.`
     : '';
 
   let faceClause = '';
@@ -105,7 +116,7 @@ export function buildSystemPrompt(
   return (
     `You are crafting an Instagram carousel post — not just picking good photos, but editing a short film.\n\n` +
     `You have ${count} candidate photos to work with.` +
-    personaClause + vibeClause + faceClause + favClause + mixClause +
+    personaClause + userFaceClause + vibeClause + faceClause + favClause + mixClause +
 
     `\n\n━━ YOUR TASK ━━\n` +
     `Build a carousel of ${maxSelect} photos that tells a coherent story. ` +
@@ -117,6 +128,14 @@ export function buildSystemPrompt(
     `• LIFE (2–4): Human element. Candid moments, experiences being lived. The "I wish I was there" slides.\n` +
     `• DETAIL (1–2): Close-ups that reward the person who keeps swiping.\n` +
     `• CLOSER (exactly 1): Emotional punctuation of the last slide.\n\n` +
+
+    `━━ COMPOSITION DIVERSITY ━━\n` +
+    `Photos are tagged with objective sidecar-computed attributes: [CLOSEUP], [MEDIUM], or [WIDE] (shot type) ` +
+    `and [SOLO], [DUO], or [GROUP] (number of people). Use these to build visual variety:\n` +
+    `• Do NOT select 3 or more [CLOSEUP] or [WIDE] shots in sequence — alternate shot scales\n` +
+    `• Aim for: at least 1 [WIDE] establishing shot (ideal for HOOK or WORLD), at least 1 [CLOSEUP] detail\n` +
+    `• [GROUP] shots work well for LIFE and WORLD beats; [SOLO] or [CLOSEUP] suit HOOK and CLOSER\n` +
+    `• If the pool has no [WIDE] shots at all, note it in "missing"\n\n` +
 
     `━━ ORDERING ━━\n` +
     `Suggest the ideal viewing order. Hook always first. Closer always last. Build toward something.\n\n` +

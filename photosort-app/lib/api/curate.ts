@@ -11,6 +11,11 @@ export async function curateDevicePhotos(params: {
   faceProfiles?: Array<{ name: string; samplePhotoB64: string }>;
   contentMix?: 'people' | 'balanced' | 'places';
   persona?: string;
+  /** Base64 JPEG of the user's reference face from face identity setup.
+   *  When present, the AI will visually exclude photos where faces appear but the user is absent. */
+  userFaceB64?: string;
+  /** Per-photo sidecar metadata to attach objective tags ([CLOSEUP], [GROUP], etc.) to photo labels. */
+  photoMetadata?: Array<{ shot_type?: string; group_size?: string }>;
   signal?: AbortSignal;
 }): Promise<{
   success: boolean;
@@ -42,6 +47,8 @@ export async function curateDevicePhotos(params: {
         face_profiles:    params.faceProfiles,
         content_mix:      params.contentMix,
         persona:          params.persona,
+        user_face_b64:    params.userFaceB64,
+        photo_metadata:   params.photoMetadata,
       }),
     });
     return res.json();

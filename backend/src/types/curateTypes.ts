@@ -11,6 +11,11 @@ export interface FaceProfile {
   samplePhotoB64: string;
 }
 
+export interface PhotoMetadata {
+  shot_type?: 'closeup' | 'medium' | 'wide';
+  group_size?: 'none' | 'solo' | 'duo' | 'group';
+}
+
 export interface CurateBody {
   photos_b64: string[];
   photo_names: string[];
@@ -21,6 +26,11 @@ export interface CurateBody {
   face_profiles?: FaceProfile[];
   content_mix?: 'people' | 'balanced' | 'places';
   persona?: string;
+  /** Base64 JPEG of the user's own face (from face identity setup). When present,
+   *  the AI is instructed to exclude photos where faces appear but the user is absent. */
+  user_face_b64?: string;
+  /** Per-photo sidecar metadata (shot type + group size) for objective AI tagging. */
+  photo_metadata?: PhotoMetadata[];
 }
 
 export interface PhotoRole {

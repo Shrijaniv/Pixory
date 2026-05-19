@@ -23,6 +23,8 @@ export async function curateRoutes(app: FastifyInstance) {
       face_profiles,
       content_mix,
       persona,
+      user_face_b64,
+      photo_metadata,
     } = request.body;
 
     if (provider === 'claude' && !ANTHROPIC_API_KEY) {
@@ -57,9 +59,10 @@ export async function curateRoutes(app: FastifyInstance) {
       const model = provider === 'claude' ? CLAUDE_VISION_MODEL : OPENAI_VISION_MODEL;
       request.log.info(`[curate] calling ${provider} (${model})...`);
 
+      const inputMeta = photo_metadata?.slice(0, maxPhotos);
       const result = provider === 'claude'
-        ? await curateWithClaude(resized, inputNames, vibe, max_select, face_profiles, inputFavs, content_mix, persona)
-        : await curateWithOpenAI(resized, inputNames, vibe, max_select, face_profiles, inputFavs, content_mix, persona);
+        ? await curateWithClaude(resized, inputNames, vibe, max_select, face_profiles, inputFavs, content_mix, persona, user_face_b64, inputMeta)
+        : await curateWithOpenAI(resized, inputNames, vibe, max_select, face_profiles, inputFavs, content_mix, persona, user_face_b64, inputMeta);
 
       request.log.info(`[curate] done in ${Date.now() - t1}ms — selected ${result.selected_indices?.length ?? 0}`);
       return { success: true, ...result };

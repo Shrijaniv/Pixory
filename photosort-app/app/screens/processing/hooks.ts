@@ -34,6 +34,9 @@ export function useProcessingState() {
     try {
       // 1. Permissions
       push('Requesting photo library access...', 2);
+      // Holds the encoded reference face photo — populated in step 7 if face filter is on,
+      // then forwarded to the AI call in step 8 so the AI can also exclude non-matching face photos.
+      let userFaceB64: string | undefined;
 
       // Show learning insight if enough history exists for this persona
       const learningHistory = await loadLearningHistory();
@@ -146,6 +149,19 @@ export function useProcessingState() {
       if (store.filterByUserFace) {
         const identity = await loadIdentity();
         if (identity) {
+          // Encode the reference face at 256px for the AI (smaller than the DeepFace input —
+          // just needs to be recognizable, not pixel-perfect for embedding extraction).
+          try {
+            const refEncoded = await ImageManipulator.manipulateAsync(
+              identity.refPhotoUri,
+              [{ resize: { width: 256 } }],
+              { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG, base64: true },
+            );
+            if (refEncoded.base64) userFaceB64 = refEncoded.base64;
+          } catch {
+            // Non-fatal — AI will still run without the reference face
+          }
+
           // Only check photos where face_count > 0 — landscapes/food always pass
           const facePhotos = visionScored.filter((p) => (p.faceCount ?? 0) > 0);
           if (facePhotos.length > 0) {
@@ -288,6 +304,11 @@ export function useProcessingState() {
 
         push(`Sending to ${label} via backend (${store.backendUrl})...`, 75);
         const apiStart = Date.now();
+        const photoMetadata = topPhotos.map((p) => ({
+          shot_type: p.shotType,
+          group_size: p.groupSize,
+        }));
+
         const result = await curateDevicePhotos({
           photosBase64,
           photoNames,
@@ -298,6 +319,8 @@ export function useProcessingState() {
           backendUrl: store.backendUrl,
           contentMix: store.contentMix,
           persona: store.persona ?? undefined,
+          userFaceB64,
+          photoMetadata,
           signal: abortRef.current.signal,
         });
         push(`${label} responded in ${((Date.now() - apiStart) / 1000).toFixed(1)}s`);
