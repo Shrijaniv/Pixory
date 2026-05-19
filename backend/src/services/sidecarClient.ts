@@ -3,7 +3,7 @@
  * at http://127.0.0.1:8001. Centralises the sidecar URL and timeout logic.
  */
 
-const SIDECAR_URL = 'http://127.0.0.1:8001';
+const SIDECAR_URL = process.env.SIDECAR_URL ?? 'http://127.0.0.1:8001';
 
 const SIDECAR_DOWN_MSG =
   'Sidecar not running. Start it with: python backend/publish_sidecar.py';
