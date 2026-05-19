@@ -16,8 +16,8 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ title: 'PhotoSort', headerShown: false }} />
-        <Stack.Screen name="processing" options={{ title: 'Analyzing', headerShown: false }} />
-        <Stack.Screen name="review" options={{ headerShown: false }} />
+        <Stack.Screen name="processing" options={{ title: 'Analyzing', headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen name="review" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="caption" options={{ headerShown: false }} />
         <Stack.Screen name="publish" options={{ headerShown: false }} />
         <Stack.Screen name="face-setup" options={{ headerShown: false }} />
