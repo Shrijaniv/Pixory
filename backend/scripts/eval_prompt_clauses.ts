@@ -59,8 +59,8 @@ console.log("\n── buildSystemPrompt: aesthete ──────────
   const p = buildSystemPrompt(10, 10, undefined, undefined, undefined, undefined, "aesthete");
   assertContains(p, "THE AESTHETE", "Aesthete persona heading present");
   assertContains(p, "palette", "Mentions palette / color coherence");
-  assertContains(p, "colors clash", "Mentions color-clash penalty");
-  assertContains(p, "visual set", "Mentions coherent visual set");
+  assertContains(p, "disqualified", "Mentions palette-break as disqualifier");
+  assertContains(p, "visual universe", "Mentions coherent visual universe");
   assertNotContains(p, "SOCIAL CONNECTOR", "No social heading in aesthete prompt");
 }
 
@@ -70,7 +70,7 @@ console.log("\n── buildSystemPrompt: social ──────────�
   assertContains(p, "SOCIAL CONNECTOR", "Social persona heading present");
   assertContains(p, "Tag me in that one", "Mentions tagging success metric");
   assertContains(p, "people in it", "Mentions every slide needs people");
-  assertContains(p, "candid laughs", "Mentions candid / genuine expressions");
+  assertContains(p, "candid, unguarded", "Mentions candid / unguarded expressions");
   assertNotContains(p, "THE AESTHETE", "No aesthete heading in social prompt");
 }
 
@@ -79,9 +79,9 @@ console.log("\n── buildSystemPrompt: logger ──────────�
   const p = buildSystemPrompt(10, 10, undefined, undefined, undefined, undefined, "logger");
   assertContains(p, "EXPERIENCE LOGGER", "Logger persona heading present");
   assertContains(p, "documentary", "Mentions documentary instinct");
-  assertContains(p, "authentic", "Mentions authenticity / rough edges");
+  assertContains(p, "proof of life", "Mentions documentary proof-of-life instinct");
   assertContains(p, "chronological", "Mentions chronological storytelling");
-  assertNotContains(p, "THE MINIMALIST", "No minimalist heading in logger prompt");
+  assertNotContains(p, "MOOD POSTER", "No mood heading in logger prompt");
 }
 
 console.log("\n── buildSystemPrompt: storyteller ────────────────────────────────────");
@@ -95,15 +95,14 @@ console.log("\n── buildSystemPrompt: storyteller ─────────
   assertContains(p, "8", "maxSelect value (8) interpolated into storyteller clause");
 }
 
-console.log("\n── buildSystemPrompt: minimalist ─────────────────────────────────────");
+console.log("\n── buildSystemPrompt: mood ───────────────────────────────────────────");
 {
-  const p = buildSystemPrompt(5, 5, undefined, undefined, undefined, undefined, "minimalist");
-  assertContains(p, "THE MINIMALIST", "Minimalist persona heading present");
-  assertContains(p, "Less is always more", "Mentions 'Less is always more'");
-  assertContains(p, "editorial discipline", "Mentions editorial discipline");
-  assertContains(p, "exceptional", "Mentions only exceptional photos qualify");
-  // maxSelect=5 should appear in the minimalist's clause
-  assertContains(p, "5", "maxSelect value (5) interpolated into minimalist clause");
+  const p = buildSystemPrompt(7, 7, undefined, undefined, undefined, undefined, "mood");
+  assertContains(p, "MOOD POSTER", "Mood Poster persona heading present");
+  assertContains(p, "light is right", "Mentions only posting when light is right");
+  assertContains(p, "atmosphere", "Mentions atmosphere as selection criterion");
+  assertContains(p, "flat", "Mentions rejecting flat/uninspired photos");
+  assertNotContains(p, "THE AESTHETE", "No aesthete heading in mood prompt");
 }
 
 console.log("\n── buildSystemPrompt: vibe framing with persona ──────────────────────");
@@ -170,11 +169,11 @@ console.log("\n── buildRolePrompt: storyteller ─────────�
   assertContains(p, "emotional arc", "Emotional arc in role prompt");
 }
 
-console.log("\n── buildRolePrompt: minimalist ───────────────────────────────────────");
+console.log("\n── buildRolePrompt: mood ─────────────────────────────────────────────");
 {
-  const p = buildRolePrompt(5, undefined, undefined, "minimalist");
-  assertContains(p, "THE MINIMALIST", "Minimalist heading in role prompt");
-  assertContains(p, "Less is always more", "Less-is-more in role prompt");
+  const p = buildRolePrompt(7, undefined, undefined, "mood");
+  assertContains(p, "MOOD POSTER", "Mood Poster heading in role prompt");
+  assertContains(p, "light is right", "Light-is-right in role prompt");
 }
 
 console.log("\n── buildRolePrompt: vibe + storyHint forwarded ───────────────────────");

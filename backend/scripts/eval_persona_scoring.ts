@@ -7,7 +7,7 @@
  * Run: npx tsx backend/scripts/eval_persona_scoring.ts
  */
 
-type PersonaType = 'aesthete' | 'social' | 'logger' | 'storyteller' | 'minimalist' | null;
+type PersonaType = 'aesthete' | 'social' | 'logger' | 'storyteller' | 'mood' | null;
 
 interface BackendPhotoScore {
   index: number;
@@ -21,7 +21,7 @@ interface BackendPhotoScore {
   complexity: number;
 }
 
-// ── Copy of computePersonaScore from photoLibrary.ts ────────────────────────
+// ── Copy of computePersonaScore from scoring.ts ─────────────────────────────
 // (kept in sync manually — if the formula changes, update here too)
 function computePersonaScore(score: BackendPhotoScore, persona: PersonaType): number {
   const s   = score.sharpness;
@@ -35,18 +35,20 @@ function computePersonaScore(score: BackendPhotoScore, persona: PersonaType): nu
 
   switch (persona) {
     case 'aesthete':
-      return s * 0.40 + bq * 0.20 + ct * 0.15 + sat * 0.10 +
-             (1 - cpx) * 0.10 + Math.min(effectiveFaces * 0.01, 0.05);
+      return s * 0.35 + sat * 0.25 + bq * 0.15 + ct * 0.10 +
+             (1 - cpx) * 0.15 + Math.min(effectiveFaces * 0.005, 0.02);
     case 'social':
-      return Math.min(effectiveFaces * 0.22, 0.55) + s * 0.20 + bq * 0.15 + ct * 0.10;
+      return Math.min(happy * 0.30, 0.45) + Math.min(neutral * 0.10, 0.15) +
+             s * 0.20 + bq * 0.10 + ct * 0.05 + sat * 0.05;
     case 'logger':
-      return s * 0.15 + Math.min(effectiveFaces * 0.10, 0.20) + bq * 0.10 + ct * 0.05 + 0.35;
+      return cpx * 0.25 + Math.min(effectiveFaces * 0.08, 0.20) +
+             bq * 0.20 + s * 0.15 + ct * 0.10 + sat * 0.10;
     case 'storyteller':
-      return s * 0.30 + bq * 0.15 + ct * 0.15 +
-             Math.min(effectiveFaces * 0.08, 0.15) + 0.15;
-    case 'minimalist':
-      return s * 0.50 + bq * 0.20 + ct * 0.15 + (1 - cpx) * 0.10 +
-             Math.min(effectiveFaces * 0.02, 0.05);
+      return bq * 0.35 + s * 0.25 + ct * 0.20 +
+             Math.min(effectiveFaces * 0.05, 0.10) + sat * 0.10;
+    case 'mood':
+      return sat * 0.45 + bq * 0.35 + ct * 0.10 + s * 0.10 +
+             Math.min(effectiveFaces * 0.005, 0.02);
     default:
       return s * 0.35 + Math.min(effectiveFaces * 0.08, 0.15) + 0.25;
   }
@@ -134,14 +136,16 @@ gt('social', 'sharp_portrait',     'perfect_landscape', 'sharp portrait > perfec
 gt('social', 'busy_market',        'minimal_clean',     'busy market (3 faces) > minimal clean (0 faces)');
 
 console.log('\n── Experience Logger ─────────────────────────────────────');
-gt('logger', 'blurry_boat_moment', 'perfect_landscape',  'blurry boat moment NOT buried under perfect landscape');
-gt('logger', 'blurry_group_laugh', 'minimal_clean',      'blurry group laugh > minimal clean (authentic moment)');
-// Logger base of 0.35 means even a blurry shot with score 0 elsewhere still gets 0.35
-const loggerBoatScore = score('logger', 'blurry_boat_moment');
+gt('logger', 'blurry_group_laugh', 'minimal_clean', 'blurry group laugh > minimal clean (complexity + faces)');
+gt('logger', 'busy_market',        'minimal_clean', 'busy market > minimal clean (complexity valued, not penalised)');
+// Logger's real semantic: the sharpness GAP is much narrower than aesthete's.
+// blurry_boat vs perfect_landscape: logger should close the gap significantly.
+const loggerGap   = score('logger',   'perfect_landscape') - score('logger',   'blurry_boat_moment');
+const aestheteGap = score('aesthete', 'perfect_landscape') - score('aesthete', 'blurry_boat_moment');
 assert(
-  loggerBoatScore > 0.35,
-  'blurry boat moment scores above 0.35 base (not penalised)',
-  `actual score: ${loggerBoatScore.toFixed(3)}`,
+  loggerGap < aestheteGap * 0.25,
+  'Logger penalises blurry_boat far less than Aesthete does (gap < 25% of aesthete gap)',
+  `loggerGap=${loggerGap.toFixed(3)}, aestheteGap=${aestheteGap.toFixed(3)}`,
 );
 
 console.log('\n── Storyteller ────────────────────────────────────────────');
@@ -158,17 +162,65 @@ assert(
 );
 gt('storyteller', 'sharp_portrait', 'blurry_boat_moment', 'sharp portrait > blurry boat (readability matters)');
 
-console.log('\n── Minimalist ─────────────────────────────────────────────');
-gt('minimalist', 'minimal_clean',     'blurry_boat_moment', 'minimal clean > blurry boat (perfection required)');
-gt('minimalist', 'perfect_landscape', 'busy_market',        'perfect landscape > busy market (complexity penalty)');
-gt('minimalist', 'perfect_landscape', 'blurry_group_laugh', 'perfect landscape > blurry group');
-gt('minimalist', 'sharp_portrait',    'blurry_boat_moment', 'sharp portrait > blurry boat');
-// Minimalist strongly penalises complexity
+console.log('\n── Mood Poster ────────────────────────────────────────────');
+gt('mood', 'perfect_landscape', 'minimal_clean',     'perfect landscape (sat=0.60) > minimal clean (sat=0.20)');
+gt('mood', 'busy_market',       'minimal_clean',     'busy market (sat=0.75) > minimal clean (sat=0.20)');
+gt('mood', 'perfect_landscape', 'blurry_boat_moment','high-sat landscape > low-sat blurry boat');
+// Mood cares about saturation above all — a flat low-sat photo loses even if sharp
 assert(
-  score('minimalist', 'busy_market') < score('minimalist', 'minimal_clean'),
-  'busy market scores below minimal clean by significant margin',
-  `busy=${score('minimalist', 'busy_market').toFixed(3)}, clean=${score('minimalist', 'minimal_clean').toFixed(3)}`,
+  score('mood', 'minimal_clean') < score('mood', 'perfect_landscape'),
+  'flat minimal_clean loses to atmospheric perfect_landscape despite being sharper',
+  `minimal_clean=${score('mood', 'minimal_clean').toFixed(3)}, perfect_landscape=${score('mood', 'perfect_landscape').toFixed(3)}`,
 );
+
+// ── Divergence checks — personas must produce distinct rankings ───────────────
+console.log('\n── Divergence ──────────────────────────────────────────────');
+
+const personas: PersonaType[] = ['aesthete', 'social', 'logger', 'storyteller', 'mood'];
+const photoNames = Object.keys(archetypes);
+
+function rankUnder(persona: PersonaType): string {
+  return [...photoNames]
+    .map((name) => ({ name, s: score(persona, name) }))
+    .sort((a, b) => b.s - a.s)
+    .map((x) => x.name)
+    .join(' > ');
+}
+
+const top1s = personas.map((p) => rankUnder(p).split(' > ')[0]);
+const uniqueTop1s = new Set(top1s);
+// With only 6 archetypes, sharing a #1 is expected — the meaningful check is top-3 divergence below.
+// We require at least 2 distinct #1s to catch total formula collapse.
+assert(
+  uniqueTop1s.size >= 2,
+  `At least 2 distinct #1 photos across 5 personas (got ${uniqueTop1s.size}: ${[...uniqueTop1s].join(', ')})`,
+  `Top picks: ${personas.map((p, i) => `${p}→${top1s[i]}`).join(', ')}`,
+);
+
+const top3s = personas.map((p) => rankUnder(p).split(' > ').slice(0, 3).join(','));
+const uniqueTop3s = new Set(top3s);
+assert(
+  uniqueTop3s.size === personas.length,
+  'All 5 personas produce a different top-3 ranking',
+  `Duplicates found:\n${personas.map((p, i) => `  ${p}: ${top3s[i]}`).join('\n')}`,
+);
+
+assert(
+  score('logger', 'busy_market') > score('aesthete', 'busy_market'),
+  'Logger scores busy_market higher than Aesthete (complexity valued vs penalised)',
+  `logger=${score('logger', 'busy_market').toFixed(3)}, aesthete=${score('aesthete', 'busy_market').toFixed(3)}`,
+);
+
+assert(
+  score('social', 'blurry_group_laugh') > score('mood', 'blurry_group_laugh'),
+  'Social scores blurry_group_laugh higher than Mood (faces vs atmosphere)',
+  `social=${score('social', 'blurry_group_laugh').toFixed(3)}, mood=${score('mood', 'blurry_group_laugh').toFixed(3)}`,
+);
+
+console.log('\n── Full rankings per persona ───────────────────────────────');
+for (const p of personas) {
+  console.log(`  ${String(p).padEnd(12)} ${rankUnder(p)}`);
+}
 
 // ── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(55)}`);

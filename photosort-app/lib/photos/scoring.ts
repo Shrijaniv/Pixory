@@ -18,6 +18,7 @@ export interface BackendPhotoScore {
   shot_type?: 'closeup' | 'medium' | 'wide';
   subject_ratio?: number;
   group_size?: 'none' | 'solo' | 'duo' | 'group';
+  phash?: string; // perceptual hash hex string for near-duplicate detection
 }
 
 /**
@@ -37,48 +38,60 @@ export function computePersonaScore(score: BackendPhotoScore, persona: PersonaTy
   let base: number;
   switch (persona) {
     case 'aesthete':
+      // Saturation is the palette proxy — the only persona that treats it as primary.
+      // Complexity penalised; faces near-irrelevant.
       base = (
-        s          * 0.40 +
-        bq         * 0.20 +
-        ct         * 0.15 +
-        sat        * 0.10 +
-        (1 - cpx)  * 0.10 +
-        Math.min(effectiveFaces * 0.01, 0.05)
+        s          * 0.35 +
+        sat        * 0.25 +
+        bq         * 0.15 +
+        ct         * 0.10 +
+        (1 - cpx)  * 0.15 +
+        Math.min(effectiveFaces * 0.005, 0.02)
       );
       break;
     case 'social':
+      // Happy faces get their own weight — separate from neutral faces.
+      // Three laughing friends score ~0.45 from faces alone.
       base = (
-        Math.min(effectiveFaces * 0.22, 0.55) +
-        s  * 0.20 +
-        bq * 0.15 +
-        ct * 0.10
+        Math.min(happy   * 0.30, 0.45) +
+        Math.min(neutral * 0.10, 0.15) +
+        s   * 0.20 +
+        bq  * 0.10 +
+        ct  * 0.05 +
+        sat * 0.05
       );
       break;
     case 'logger':
+      // Complexity is POSITIVE — busy, layered scenes = authentic life. No constant floor.
       base = (
+        cpx                                    * 0.25 +
+        Math.min(effectiveFaces * 0.08, 0.20) +
+        bq                                     * 0.20 +
         s                                      * 0.15 +
-        Math.min(effectiveFaces * 0.10, 0.20) +
-        bq                                     * 0.10 +
-        ct                                     * 0.05 +
-        0.35
+        ct                                     * 0.10 +
+        sat                                    * 0.10
       );
       break;
     case 'storyteller':
+      // Brightness quality primary — interesting light creates tonal variety across slides.
+      // No constant floor; no complexity preference.
       base = (
-        s  * 0.30 +
-        bq * 0.15 +
-        ct * 0.15 +
-        Math.min(effectiveFaces * 0.08, 0.15) +
-        0.15
+        bq  * 0.35 +
+        s   * 0.25 +
+        ct  * 0.20 +
+        Math.min(effectiveFaces * 0.05, 0.10) +
+        sat * 0.10
       );
       break;
-    case 'minimalist':
+    case 'mood':
+      // Saturation + atmosphere overwhelm everything else.
+      // A slightly soft golden-hour shot beats a sharp flat one.
       base = (
-        s          * 0.50 +
-        bq         * 0.20 +
-        ct         * 0.15 +
-        (1 - cpx)  * 0.10 +
-        Math.min(effectiveFaces * 0.02, 0.05)
+        sat * 0.45 +
+        bq  * 0.35 +
+        ct  * 0.10 +
+        s   * 0.10 +
+        Math.min(effectiveFaces * 0.005, 0.02)
       );
       break;
     default:
@@ -99,9 +112,9 @@ export function computePersonaScore(score: BackendPhotoScore, persona: PersonaTy
       // Wide/medium shots have more compositional room and color field
       shotBonus = st === 'wide' ? 0.05 : st === 'medium' ? 0.03 : -0.03;
       break;
-    case 'minimalist':
-      // Negative space reads as minimalist; closeups can feel cluttered
-      shotBonus = st === 'wide' ? 0.08 : st === 'medium' ? 0.02 : -0.05;
+    case 'mood':
+      // Wide shots capture more sky/atmosphere; closeups lose the ambient light context
+      shotBonus = st === 'wide' ? 0.08 : st === 'medium' ? 0.02 : -0.04;
       break;
     // storyteller, logger, default: no shot-type bias — diversity handled at selection level
   }
@@ -197,6 +210,7 @@ export async function scoreWithBackend(
         shotType:          score.shot_type,
         subjectRatio:      score.subject_ratio,
         groupSize:         score.group_size,
+        phash:             score.phash,
       };
 
       // Apply persona formula, then nudge with learning bias

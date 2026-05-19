@@ -155,7 +155,8 @@ export async function recordOutcome(
  * Human-readable summary of what the app has learned for a persona.
  * Returns null if not enough data (< 5 combined examples).
  */
-export function learningInsight(learning: PersonaLearning): string | null {
+export function learningInsight(learning: PersonaLearning | undefined | null): string | null {
+  if (!learning) return null;
   const total = learning.promotedCount + learning.rejectedCount;
   if (total < 5) return null;
 

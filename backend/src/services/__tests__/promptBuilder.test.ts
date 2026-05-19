@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildPersonaClause, buildSystemPrompt, buildRolePrompt } from '../promptBuilder';
 
-const PERSONAS = ['aesthete', 'social', 'logger', 'storyteller', 'minimalist'] as const;
+const PERSONAS = ['aesthete', 'social', 'logger', 'storyteller', 'mood'] as const;
 
 describe('buildPersonaClause', () => {
   it('returns empty string for undefined persona', () => {
@@ -18,7 +18,7 @@ describe('buildPersonaClause', () => {
       social:      'Tag me in that one',
       logger:      'documentary instinct',
       storyteller: 'sequences',
-      minimalist:  'Less is always more',
+      mood:        'light is right',
     };
     for (const [persona, keyword] of Object.entries(expectations)) {
       const clause = buildPersonaClause(persona, 10);
@@ -103,7 +103,7 @@ describe('buildRolePrompt', () => {
   });
 
   it('injects persona clause when provided', () => {
-    const prompt = buildRolePrompt(5, undefined, undefined, 'minimalist');
-    expect(prompt).toContain('MINIMALIST');
+    const prompt = buildRolePrompt(5, undefined, undefined, 'mood');
+    expect(prompt).toContain('MOOD');
   });
 });

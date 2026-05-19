@@ -5,3 +5,5 @@ opencv-python
 numpy
 deepface
 tf-keras
+Pillow
+ImageHash

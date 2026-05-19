@@ -13,11 +13,13 @@ import tempfile
 from pathlib import Path
 from typing import List
 
+import imagehash
 import numpy as np
 import cv2
 from deepface import DeepFace
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from PIL import Image
 from pydantic import BaseModel
 from instagrapi import Client
 
@@ -156,6 +158,7 @@ class PhotoScore(BaseModel):
     shot_type: str            # 'closeup' | 'medium' | 'wide' — estimated from face bbox area
     subject_ratio: float      # largest face bbox area / frame area (0–1); 0 for no-face photos
     group_size: str           # 'none' | 'solo' | 'duo' | 'group' — derived from face_count
+    phash: str | None = None  # perceptual hash hex string for near-duplicate detection
 
 
 class ScoreResult(BaseModel):
@@ -255,7 +258,7 @@ def score_photos(req: ScoreRequest):
                     index=item.index, sharpness=0.5, face_count=0, happy_face_count=0,
                     brightness=0.5, brightness_quality=0.5, contrast=0.5,
                     saturation=0.3, complexity=0.3,
-                    shot_type='wide', subject_ratio=0.0, group_size='none',
+                    shot_type='wide', subject_ratio=0.0, group_size='none', phash=None,
                 ))
                 continue
 
@@ -352,6 +355,15 @@ def score_photos(req: ScoreRequest):
             edges = cv2.Canny(gray, 50, 150)
             complexity = float((edges > 0).sum() / edges.size)
 
+            # Perceptual hash — ported from instagram_sorter/app/core/deduplicator.py
+            phash_str: str | None = None
+            try:
+                pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+                pil_img.thumbnail((512, 512))
+                phash_str = str(imagehash.phash(pil_img))
+            except Exception:
+                pass
+
             results.append(PhotoScore(
                 index=item.index,
                 sharpness=sharpness,
@@ -365,6 +377,7 @@ def score_photos(req: ScoreRequest):
                 shot_type=shot_type,
                 subject_ratio=subject_ratio,
                 group_size=group_size,
+                phash=phash_str,
             ))
 
         except Exception as e:
@@ -374,7 +387,7 @@ def score_photos(req: ScoreRequest):
                 index=item.index, sharpness=0.5, face_count=0, happy_face_count=0,
                 brightness=0.5, brightness_quality=0.5, contrast=0.5,
                 saturation=0.3, complexity=0.3,
-                shot_type='wide', subject_ratio=0.0, group_size='none',
+                shot_type='wide', subject_ratio=0.0, group_size='none', phash=None,
             ))
 
     return ScoreResult(scores=results)

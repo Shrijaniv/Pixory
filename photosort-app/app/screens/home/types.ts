@@ -28,9 +28,9 @@ export const PERSONAS: { id: PersonaType; name: string; description: string }[] 
     description: "They think in sequences. They'll swap a better photo for a worse one because it transitions better to the next slide.",
   },
   {
-    id: 'minimalist',
-    name: 'The Minimalist',
-    description: 'Would rather post 4 perfect photos than 10 good ones. Less is always more.',
+    id: 'mood',
+    name: 'The Mood Poster',
+    description: 'Only posts when the light is right. Golden hour, soft shadows, atmosphere — the feeling in the photo is the post.',
   },
 ];
 

@@ -16,7 +16,7 @@ type ShotType = 'closeup' | 'medium' | 'wide';
 const SHOT_TYPE_TARGETS: Record<string, { closeup: number; medium: number; wide: number }> = {
   social:      { closeup: 5, medium: 3, wide: 2 },
   aesthete:    { closeup: 1, medium: 4, wide: 5 },
-  minimalist:  { closeup: 1, medium: 2, wide: 2 },  // 5-photo carousel
+  mood:        { closeup: 1, medium: 3, wide: 6 },  // wide shots capture sky/atmosphere
   storyteller: { closeup: 3, medium: 4, wide: 3 },
   logger:      { closeup: 3, medium: 4, wide: 3 },
   default:     { closeup: 2, medium: 5, wide: 3 },

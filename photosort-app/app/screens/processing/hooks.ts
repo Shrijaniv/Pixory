@@ -41,7 +41,7 @@ export function useProcessingState() {
       // Show learning insight if enough history exists for this persona
       const learningHistory = await loadLearningHistory();
       const personaKey = store.persona ?? 'default';
-      const insight = learningInsight(learningHistory[personaKey]);
+      const insight = learningHistory[personaKey] ? learningInsight(learningHistory[personaKey]) : null;
       if (insight) push(`✦ ${insight}`);
       const { granted, limited } = await requestPermission();
       if (!granted) throw new Error('Photo library permission denied. Please enable it in Settings → Privacy → Photos.');
@@ -295,9 +295,9 @@ export function useProcessingState() {
         if (cancelled.current) return;
 
         // Persona shapes how many photos the AI selects.
-        // Minimalist = 5 (quality over quantity), Storyteller = 8 (curated arc).
+        // Mood = 7 (light-selective, not quantity-obsessed), Storyteller = 8 (curated arc).
         // The review screen MAX_CAROUSEL stays 10 — user can always add more from trays.
-        const maxSelect = store.persona === 'minimalist' ? 5
+        const maxSelect = store.persona === 'mood' ? 7
                         : store.persona === 'storyteller' ? 8
                         : 10;
         if (store.persona) push(`Persona: ${store.persona} → AI will select up to ${maxSelect} photos`);

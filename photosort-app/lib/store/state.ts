@@ -35,16 +35,17 @@ export interface LocalPhoto {
   shotType?: 'closeup' | 'medium' | 'wide';
   subjectRatio?: number;   // largest face/subject area as fraction of frame (0–1)
   groupSize?: 'none' | 'solo' | 'duo' | 'group';
+  phash?: string;          // perceptual hash hex string for near-duplicate detection
 }
 
 export type ContentMix = 'people' | 'balanced' | 'places';
 
 export type PersonaType =
-  | 'aesthete'      // palette coherence > emotional impact; complexity penalised
-  | 'social'        // people in every frame, taggable moments
-  | 'logger'        // documentary, authentic, rough edges ok; isFavorite = gold
-  | 'storyteller'   // sequence & transitions above all; visual diversity critical
-  | 'minimalist';   // fewer but perfect — AI caps at 5, user can add more up to 10
+  | 'aesthete'      // saturation-primary palette coherence; complexity penalised
+  | 'social'        // happy faces dominate; taggable moments
+  | 'logger'        // complexity = authentic life; rough edges valued
+  | 'storyteller'   // light quality drives scene variety; arc above all
+  | 'mood';         // saturation + atmosphere primary; vibe-only posting
 
 export interface AppStore {
   dateFrom: string;

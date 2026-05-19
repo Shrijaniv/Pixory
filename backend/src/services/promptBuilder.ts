@@ -12,50 +12,52 @@ export function buildPersonaClause(persona: string | undefined, maxSelect: numbe
     case 'aesthete':
       return (
         `\n\n━━ POSTING PERSONA: THE AESTHETE ━━\n` +
-        `This user has a consistent grid. They will reject a perfect moment because the colors clash. ` +
-        `Select photos where tones, saturation, and overall mood are coherent across the entire carousel. ` +
-        `A sharp photo with clashing colors is WORSE than a softer photo that fits the palette. ` +
-        `Every slide must feel like it belongs to the same visual set. ` +
-        `Reject visual outliers even if they are emotionally strong. ` +
-        `Faces are irrelevant unless the portrait composition is impeccable and fits the palette.`
+        `This user has a consistent grid built around colour palette. Saturation, tone, and colour temperature ` +
+        `are the primary selection criteria — not sharpness, not emotion. ` +
+        `A photo that breaks the palette is disqualified even if it is technically perfect or emotionally strong. ` +
+        `Every slide must feel like it belongs to the same visual universe — same warmth, same saturation register, same mood. ` +
+        `Complexity and clutter are enemies; clean subjects within a coherent colour story win. ` +
+        `Faces are acceptable only when the portrait fits the palette without disturbing it.`
       );
     case 'social':
       return (
         `\n\n━━ POSTING PERSONA: THE SOCIAL CONNECTOR ━━\n` +
         `Every slide needs to have people in it. Landscapes without people feel empty to this user. ` +
         `"Tag me in that one" is the success metric — faces must be visible and expressions genuine. ` +
-        `Prefer group shots, candid laughs, and moments where friends would want to tag themselves. ` +
+        `Laughing, candid, unguarded moments beat posed shots. Happy expressions outweigh neutral ones. ` +
         `A blurry portrait of laughing friends beats a technically perfect empty landscape. ` +
-        `Select landscape/scene-only shots ONLY as establishing context between people shots.`
+        `Select landscape/scene-only shots ONLY as brief establishing context between people shots.`
       );
     case 'logger':
       return (
         `\n\n━━ POSTING PERSONA: THE EXPERIENCE LOGGER ━━\n` +
-        `"I was here, I did this." This user has a documentary instinct. ` +
-        `Slightly rough edges feel authentic — they would post the blurry photo from the boat because it was a real moment. ` +
-        `Do NOT penalise imperfect exposure, motion blur, or unconventional framing if it captures genuine experience. ` +
-        `Prefer chronological storytelling. Photos the user hearted (♥) are especially valuable — ` +
-        `they captured them in the moment for a reason. ` +
-        `A posed, perfectly-lit photo of nothing is worse than a shaky, real one.`
+        `"I was here, I did this." This user has a documentary instinct — they post proof of life, not a portfolio. ` +
+        `Visual complexity is a virtue: crowded scenes, overlapping figures, messy tables, motion blur are evidence that something real happened. ` +
+        `Do NOT favour clean, composed, or "content-y" shots over chaotic, lived-in ones. ` +
+        `A perfectly lit photo of an empty beach is worse than a shaky photo of everyone piling into the boat. ` +
+        `Photos the user hearted (♥) are especially valuable — they captured them in the moment for a reason. ` +
+        `Prefer chronological ordering that reads like a diary entry, not a highlight reel.`
       );
     case 'storyteller':
       return (
         `\n\n━━ POSTING PERSONA: THE STORYTELLER ━━\n` +
         `This user thinks in sequences. They will swap a better photo for a worse one because it ` +
         `transitions better to the next slide. The emotional arc across all slides IS the product. ` +
-        `Actively prioritise visual variety — a wide shot must be followed by something different in scale or subject. ` +
+        `Actively prioritise tonal variety — the set must move between bright and dark, near and far, busy and sparse. ` +
+        `A carousel where every slide has the same ambient brightness or subject distance is a failed sequence. ` +
         `No two adjacent slides should have the same composition, focal length, or subject type. ` +
         `The ordering you suggest is as important as the photos you select. ` +
         `A set of ${maxSelect} photos that tells a complete arc beats ${maxSelect} individually great photos with no flow.`
       );
-    case 'minimalist':
+    case 'mood':
       return (
-        `\n\n━━ POSTING PERSONA: THE MINIMALIST ━━\n` +
-        `This user would rather post ${maxSelect} perfect photos than ${maxSelect + 5} good ones. Less is always more. ` +
-        `Every photo must be exceptional — if it is merely "good", do NOT include it. ` +
-        `Prefer clean compositions, uncluttered backgrounds, and impeccable light. ` +
-        `Actively resist filling all ${maxSelect} slots — selecting fewer is a sign of editorial discipline, not failure. ` +
-        `A carousel of ${maxSelect - 1} extraordinary photos is better than ${maxSelect} with one that's just okay.`
+        `\n\n━━ POSTING PERSONA: THE MOOD POSTER ━━\n` +
+        `This user only posts when the light is right. Golden hour, blue hour, soft window light, dramatic shadows — ` +
+        `the quality of light and the emotional atmosphere of the photo IS the post. ` +
+        `A slightly soft photo with magic light beats a technically sharp photo under flat or harsh light. ` +
+        `Saturation and atmosphere take absolute precedence over sharpness, composition, or even content. ` +
+        `Reject any photo that feels visually flat, grey, or uninspired even if it is technically clean. ` +
+        `Faces are acceptable only when they are bathed in beautiful light and add to the atmosphere.`
       );
     default:
       return '';
