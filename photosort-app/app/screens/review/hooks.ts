@@ -18,6 +18,7 @@ export function useReviewState() {
   const reorganizeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reorganizeAbort = useRef<AbortController | null>(null);
   const mountedRef = useRef(false); // skip re-label on initial load
+  const skipReorganizeRef = useRef(false); // skip re-label when selection is AI-driven (prevents loop)
   // Snapshot of the AI's original selection — used to distinguish "rejected AI pick"
   // from "deselected something the user themselves added"
   const initialSelectionRef = useRef<Set<string>>(new Set());
@@ -63,6 +64,7 @@ export function useReviewState() {
         const photoNames: string[] = [];
         const encodedSortedIndices: number[] = []; // encodeIdx → sortedIdx
         for (let si = 0; si < sorted.length; si++) {
+          if (controller.signal.aborted) return; // stop encoding on navigation
           try {
             const m = await ImageManipulator.manipulateAsync(
               sorted[si].localUri,
@@ -103,6 +105,7 @@ export function useReviewState() {
           const reorderedUris = new Set(reordered.map((item) => item.localUri));
           const notEncoded = sorted.filter((item) => !reorderedUris.has(item.localUri));
           const finalOrdered = [...reordered, ...notEncoded];
+          skipReorganizeRef.current = true; // AI-driven reorder — don't re-trigger the API
           setSelected(finalOrdered.map((item, i) => ({ localUri: item.localUri, order: i + 1 })));
           store.selectedPhotos = finalOrdered.map((item) => item.localUri);
         }
@@ -129,9 +132,12 @@ export function useReviewState() {
     }, 1500);
   }, []);
 
-  // Watch selection changes and trigger re-label
+  // Watch selection changes and trigger re-label.
+  // Skip when the change was AI-driven (AI returned reordering) to prevent an
+  // infinite loop: AI reorders → setSelected → this effect → API → AI reorders → …
   useEffect(() => {
     if (!mountedRef.current) return;
+    if (skipReorganizeRef.current) { skipReorganizeRef.current = false; return; }
     triggerReorganize(selected);
   }, [selected, triggerReorganize]);
 
