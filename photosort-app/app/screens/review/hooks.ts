@@ -211,7 +211,13 @@ export function useReviewState() {
 
   function handleNext() {
     const ordered = [...selected].sort((a, b) => a.order - b.order);
-    store.selectedPhotos = ordered.map((p) => p.localUri);
+    // Deduplicate by URI before writing to store — guards against any upstream duplicates
+    const seen = new Set<string>();
+    store.selectedPhotos = ordered.map((p) => p.localUri).filter((uri) => {
+      if (seen.has(uri)) return false;
+      seen.add(uri);
+      return true;
+    });
     router.push('/caption');
   }
 

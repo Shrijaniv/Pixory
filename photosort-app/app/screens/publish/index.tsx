@@ -63,12 +63,12 @@ export default function PublishScreen() {
               style={{ height: PREVIEW_H }}
               onMomentumScrollEnd={(e) => setCurrentIdx(Math.round(e.nativeEvent.contentOffset.x / SCREEN_W))}
             >
-              {photos.map((uri) => (
-                <Image key={uri} source={{ uri }} style={{ width: SCREEN_W, height: PREVIEW_H }} contentFit="cover" />
+              {[...new Set(photos)].map((uri, i) => (
+                <Image key={`${uri}-${i}`} source={{ uri }} style={{ width: SCREEN_W, height: PREVIEW_H }} contentFit="cover" />
               ))}
             </ScrollView>
             <View style={styles.dotsRow}>
-              {photos.slice(0, 10).map((_, i) => (
+              {[...new Set(photos)].slice(0, 10).map((_, i) => (
                 <View key={i} style={[styles.dot, i === currentIdx && styles.dotActive]} />
               ))}
             </View>
