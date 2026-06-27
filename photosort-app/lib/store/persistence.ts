@@ -7,12 +7,15 @@ import { ContentMix, PersonaType, store } from './state';
 
 const PREFS_FILE = (FileSystem.documentDirectory ?? '') + 'pixory_prefs_v1.json';
 
+/** The built-in default from state.ts — used to heal stale stored URLs. */
+const DEFAULT_BACKEND_URL = store.backendUrl;
+
 /**
- * Production backend URL — update this after deploying to Railway.
- * The migration in loadPersistedPrefs() auto-upgrades any stored localhost
- * URL to this value so existing users connect automatically.
+ * URLs that are known-stale and should fall back to the current default:
+ * the undeployed Railway placeholder and loopback addresses (unreachable
+ * from a phone). Keeps the app pointed at a working backend across rebuilds.
  */
-export const PRODUCTION_BACKEND_URL = 'https://pixory-backend-production.up.railway.app';
+const STALE_URL_MARKERS = ['railway.app', 'localhost', '127.0.0.1'];
 
 export async function loadPersistedPrefs(): Promise<void> {
   try {
@@ -21,12 +24,12 @@ export async function loadPersistedPrefs(): Promise<void> {
     const raw = await FileSystem.readAsStringAsync(PREFS_FILE);
     const saved = JSON.parse(raw);
 
-    // Auto-migrate: upgrade any stored localhost URL to the production backend.
-    if (saved.backendUrl && (saved.backendUrl.includes('localhost') || saved.backendUrl.includes('127.0.0.1'))) {
-      store.backendUrl = PRODUCTION_BACKEND_URL;
-      persistPrefs(); // fire-and-forget to write the upgrade immediately
-    } else if (saved.backendUrl) {
+    // Heal stale stored URLs by falling back to the current built-in default.
+    if (saved.backendUrl && !STALE_URL_MARKERS.some((m) => saved.backendUrl.includes(m))) {
       store.backendUrl = saved.backendUrl;
+    } else {
+      store.backendUrl = DEFAULT_BACKEND_URL;
+      persistPrefs(); // fire-and-forget to write the healed value immediately
     }
 
     if (saved.method)      store.method      = saved.method;
@@ -35,6 +38,7 @@ export async function loadPersistedPrefs(): Promise<void> {
     if (saved.filterByUserFace !== undefined) store.filterByUserFace = saved.filterByUserFace;
     if (saved.profilePhotoUri !== undefined)  store.profilePhotoUri  = saved.profilePhotoUri;
     if (saved.displayName !== undefined)      store.displayName      = saved.displayName;
+    if (saved.handle !== undefined)           store.handle           = saved.handle;
   } catch { /* ignore */ }
 }
 
@@ -48,6 +52,7 @@ export async function persistPrefs(): Promise<void> {
       filterByUserFace:  store.filterByUserFace,
       profilePhotoUri:   store.profilePhotoUri,
       displayName:       store.displayName,
+      handle:            store.handle,
     }));
   } catch { /* ignore */ }
 }

@@ -38,7 +38,7 @@ export default function LabeledInput({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={Colors.placeholder}
+        placeholderTextColor={Colors.textFaint}
         multiline={multiline}
         numberOfLines={multiline ? numberOfLines : undefined}
         secureTextEntry={secureTextEntry}
@@ -54,17 +54,17 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   label: {
-    ...Typography.labelBold,
-    color: Colors.text,
-    marginBottom: Spacing.xs,
+    ...Typography.labelMono,
+    color: Colors.textFaint,
+    marginBottom: Spacing.sm,
   },
   input: {
     borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.md,
+    borderColor: Colors.lineMid,
+    borderRadius: Radius.input,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    ...Typography.bodyMd,
+    paddingVertical: Spacing.md,
+    ...Typography.bodyLg,
     color: Colors.text,
     backgroundColor: Colors.surface,
   },
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   },
   hint: {
     ...Typography.bodySm,
-    color: Colors.placeholder,
+    color: Colors.textFaint,
     marginTop: Spacing.xs,
   },
 });

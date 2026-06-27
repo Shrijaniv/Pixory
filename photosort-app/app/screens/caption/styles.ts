@@ -1,281 +1,102 @@
-import { Dimensions, StyleSheet } from 'react-native';
-import { SCREEN_W, THUMB_SIZE } from './types';
+import { StyleSheet } from 'react-native';
+import { Colors, Radius, Spacing, Typography } from '../../../lib/theme';
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#FAFAFA',
-  },
+export const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: Colors.bg },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#DBDBDB',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
   },
-  headerBack: {
-    color: '#262626',
-    fontSize: 16,
-  },
-  headerTitle: {
-    color: '#262626',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  headerShare: {
-    color: '#0095F6',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  photosStrip: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#DBDBDB',
-    paddingVertical: 12,
-  },
-  photosRow: {
-    paddingHorizontal: 14,
-    gap: 6,
-  },
-  photoThumb: {
-    width: THUMB_SIZE,
-    height: THUMB_SIZE,
-    borderRadius: 6,
-    backgroundColor: '#EEE',
-  },
-  photoCount: {
-    paddingHorizontal: 14,
-    paddingTop: 8,
-    fontSize: 12,
-    color: '#8E8E8E',
-  },
-  moodSection: {
-    backgroundColor: '#FFFFFF',
-    marginTop: 12,
-    paddingTop: 14,
-    paddingBottom: 4,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#DBDBDB',
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#8E8E8E',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    paddingHorizontal: 16,
-    marginBottom: 10,
-  },
-  moodRow: {
-    paddingHorizontal: 14,
-    gap: 8,
-    paddingBottom: 14,
-  },
-  moodChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: '#DBDBDB',
-    backgroundColor: '#FAFAFA',
-  },
-  moodIcon: {
-    fontSize: 14,
-  },
-  moodLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#262626',
-  },
-  moodLabelActive: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  editorSection: {
-    backgroundColor: '#FFFFFF',
-    marginTop: 12,
-    paddingTop: 14,
-    paddingBottom: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#DBDBDB',
-  },
-  editorHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingRight: 16,
-    marginBottom: 10,
-  },
-  charCount: {
-    fontSize: 11,
-    color: '#C7C7CC',
-  },
-  captionEditor: {
-    marginHorizontal: 16,
-    fontSize: 15,
-    color: '#262626',
-    lineHeight: 22,
-    minHeight: 100,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#DBDBDB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: '#FAFAFA',
-  },
-  hashtagsSection: {
-    backgroundColor: '#FFFFFF',
-    marginTop: 12,
-    paddingTop: 14,
-    paddingBottom: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#DBDBDB',
-  },
-  hashtagsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingRight: 16,
-    marginBottom: 10,
-  },
-  toggleBtn: {
-    padding: 4,
-  },
-  toggleTrack: {
-    width: 44,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#E5E5EA',
-    justifyContent: 'center',
-    paddingHorizontal: 2,
-  },
-  toggleTrackOn: {
-    backgroundColor: '#34C759',
-  },
-  toggleThumb: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  toggleThumbOn: {
-    transform: [{ translateX: 20 }],
-  },
-  locationInput: {
-    marginTop: 8,
-    marginHorizontal: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#DBDBDB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#1C1C1E',
-    backgroundColor: '#F9F9F9',
-  },
-  creditRow: {
-    marginTop: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#DBDBDB',
-    backgroundColor: '#FFFFFF',
-  },
-  creditText: {
-    fontSize: 13,
-    color: '#8E8E8E',
-  },
-  hashtagsText: {
-    paddingHorizontal: 16,
-    fontSize: 14,
-    color: '#0095F6',
-    lineHeight: 22,
-  },
-  previewSection: {
-    marginTop: 12,
-    paddingTop: 14,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#DBDBDB',
-  },
-  previewCard: {
-    backgroundColor: '#FFFFFF',
-  },
-  previewPostHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  previewAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#0095F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  previewAvatarText: {
-    color: '#FFF',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  previewUsername: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#262626',
-  },
-  previewImageSlot: {
-    width: SCREEN_W,
-    height: SCREEN_W,
-    backgroundColor: '#000',
+  back: { fontSize: 30, color: Colors.text, lineHeight: 32 },
+  title: { ...Typography.title, color: Colors.text },
+  next: { ...Typography.titleSm, color: Colors.accentText },
+
+  // Live IG preview
+  preview: {
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: Radius.card,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.line,
   },
-  previewImage: {
-    width: '100%',
-    height: '100%',
+  previewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
-  carouselBadge: {
+  pvAvatarRing: { width: 26, height: 26, borderRadius: 13, padding: 2 },
+  pvAvatarInner: { flex: 1, borderRadius: 11, backgroundColor: Colors.elevated },
+  pvHandle: { ...Typography.titleSm, fontSize: 12, color: Colors.text, flex: 1 },
+  pvDots: { color: Colors.text, fontSize: 16 },
+
+  pvImageSlot: { width: '100%', height: 188, backgroundColor: Colors.elevated },
+  pvImage: { width: '100%', height: '100%' },
+  pvCountBadge: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    top: Spacing.sm,
+    right: Spacing.sm,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: Radius.full,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
+    paddingVertical: 3,
   },
-  carouselBadgeText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '600',
+  pvCountText: { ...Typography.mono, color: '#FFF', fontSize: 10 },
+  pvDotsRow: {
+    position: 'absolute',
+    bottom: Spacing.sm,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    gap: 4,
   },
-  previewCaption: {
-    paddingHorizontal: 12,
-    paddingTop: 10,
-    paddingBottom: 16,
+  pvDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: 'rgba(255,255,255,0.4)' },
+  pvDotActive: { backgroundColor: '#FFF' },
+
+  pvActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
   },
-  previewCaptionText: {
-    fontSize: 14,
-    color: '#262626',
-    lineHeight: 20,
+  pvActionIcon: { fontSize: 18, color: Colors.text },
+  pvCaption: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm },
+  pvCaptionText: { ...Typography.bodySm, color: Colors.textMuted, lineHeight: 18 },
+  pvCaptionHandle: { color: Colors.text, fontFamily: 'SchibstedGrotesk_700Bold' },
+
+  // Chips
+  chipRow: { gap: Spacing.sm, paddingVertical: 2 },
+
+  // Editor
+  editor: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.lineMid,
+    padding: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  editorInput: {
+    ...Typography.bodyLg,
+    color: Colors.text,
+    minHeight: 90,
+  },
+  hashtags: { ...Typography.bodyMd, color: Colors.hashtag },
+
+  // Location
+  location: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.input,
+    borderWidth: 1,
+    borderColor: Colors.lineMid,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    ...Typography.bodyMd,
+    color: Colors.text,
   },
 });
-
-export default styles;

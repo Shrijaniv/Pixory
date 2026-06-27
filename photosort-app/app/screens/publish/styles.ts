@@ -1,94 +1,81 @@
-import { Dimensions, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Colors, Radius, Spacing, Typography } from '../../../lib/theme';
 
 export const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FAFAFA' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 13,
-    backgroundColor: '#FFF', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#DBDBDB',
+  root: { flex: 1, backgroundColor: Colors.bg },
+  scroll: { paddingHorizontal: Spacing.xl, gap: Spacing.lg },
+
+  // Confirm strip
+  confirm: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: Radius.card,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.line,
   },
-  headerBack: { color: '#262626', fontSize: 16, width: 50 },
-  headerTitle: { color: '#262626', fontSize: 16, fontWeight: '600' },
-  scroll: { gap: 0 },
-
-  previewSection: { backgroundColor: '#000' },
-  dotsRow: { flexDirection: 'row', justifyContent: 'center', gap: 5, paddingVertical: 8 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.3)' },
-  dotActive: { backgroundColor: '#FFF', width: 18 },
-  carouselHint: { color: '#8E8E8E', fontSize: 12, textAlign: 'center', paddingBottom: 10 },
-
-  captionCard: {
-    backgroundColor: '#FFF', margin: 12, borderRadius: 12,
-    padding: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: '#DBDBDB',
+  coverWrap: { position: 'relative' },
+  cover: { width: 62, height: 62, borderRadius: Radius.tile, backgroundColor: Colors.elevated },
+  coverBadge: {
+    position: 'absolute',
+    right: -4,
+    bottom: -4,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.accentSolid,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
   },
-  captionLabel: { fontSize: 10, fontWeight: '700', color: '#8E8E8E', letterSpacing: 0.8, marginBottom: 8 },
-  captionText: { fontSize: 14, color: '#262626', lineHeight: 21, marginBottom: 12 },
-  copyBtn: {
-    borderWidth: 1.5, borderColor: '#0095F6', borderRadius: 8,
-    paddingVertical: 9, alignItems: 'center',
+  coverBadgeText: { ...Typography.mono, color: '#FFF', fontSize: 10 },
+  confirmTitle: { ...Typography.titleSm, color: Colors.text },
+  confirmMeta: { ...Typography.bodySm, color: Colors.textFaint, marginTop: 2 },
+  confirmReady: { ...Typography.bodySm, color: Colors.success, marginTop: 2 },
+
+  // Action 1 (Instagram)
+  actionPrimary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    borderRadius: Radius.card,
+    padding: Spacing.lg,
+    shadowColor: Colors.accentGlow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 20,
+    elevation: 6,
   },
-  copyBtnText: { color: '#0095F6', fontSize: 14, fontWeight: '600' },
+  actionIcon: { fontSize: 22, color: '#FFF' },
+  actionPrimaryTitle: { ...Typography.title, fontSize: 16, color: '#FFF' },
+  actionPrimarySub: { ...Typography.bodySm, color: 'rgba(255,255,255,0.9)', marginTop: 2 },
+  actionChevron: { fontSize: 22, color: '#FFF' },
 
-  section: {
-    backgroundColor: '#FFF', marginHorizontal: 12, marginBottom: 12, borderRadius: 12,
-    padding: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: '#DBDBDB', gap: 12,
+  // Action 2 (Save)
+  actionSecondary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    borderRadius: Radius.card,
+    padding: Spacing.lg,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.lineMid,
   },
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: '#262626' },
-  sectionHint: { fontSize: 13, color: '#8E8E8E', lineHeight: 19 },
-  bold: { fontWeight: '700', color: '#262626' },
+  actionIconDark: { fontSize: 22, color: Colors.text },
+  actionSecondaryTitle: { ...Typography.title, fontSize: 16, color: Colors.text },
+  actionSecondarySub: { ...Typography.bodySm, color: Colors.textFaint, marginTop: 2 },
+  actionChevronDark: { fontSize: 22, color: Colors.textDim },
 
-  errorBox: { backgroundColor: '#FFF0F0', borderRadius: 8, padding: 12 },
-  errorText: { color: '#FF3B30', fontSize: 13, lineHeight: 18 },
+  status: { ...Typography.bodySm, color: Colors.textMuted, textAlign: 'center' },
 
-  primaryBtn: {
-    backgroundColor: '#0095F6', borderRadius: 10,
-    paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center',
+  // Privacy
+  privacy: {
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: Radius.tile,
+    padding: Spacing.lg,
   },
-  primaryBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
-
-  // Instagram gradient-ish button
-  igBtn: {
-    borderRadius: 10, paddingVertical: 15, alignItems: 'center',
-    flexDirection: 'row', justifyContent: 'center',
-    backgroundColor: '#C13584', // Instagram brand purple-pink
-  },
-  igBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
-
-  btnDisabled: { opacity: 0.5 },
-
-  // Connected state
-  connectedRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#F5F5F5', borderRadius: 10, padding: 12,
-  },
-  connectedAvatar: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#C13584', alignItems: 'center', justifyContent: 'center',
-  },
-  connectedAvatarText: { color: '#FFF', fontSize: 18, fontWeight: '700' },
-  connectedName: { color: '#262626', fontSize: 14, fontWeight: '600' },
-  connectedSub: { color: '#8E8E8E', fontSize: 12, marginTop: 1 },
-  disconnectBtn: { color: '#FF3B30', fontSize: 13, fontWeight: '500' },
-
-  // Credential inputs
-  credFields: { gap: 10 },
-  input: {
-    backgroundColor: '#F5F5F5', borderRadius: 10, paddingHorizontal: 14,
-    paddingVertical: 13, fontSize: 14, color: '#262626',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: '#DBDBDB',
-  },
-
-  privacyNote: { fontSize: 11, color: '#AAAAAA', lineHeight: 16, textAlign: 'center' },
-
-  // Inline success
-  successInline: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  successInlineIcon: { fontSize: 22, color: '#34C759' },
-  successInlineTitle: { fontSize: 14, fontWeight: '600', color: '#262626', flex: 1, flexWrap: 'wrap' },
-  successInlineSub: { fontSize: 12, color: '#8E8E8E', marginTop: 3, lineHeight: 17 },
-
-  doneBtn: {
-    marginHorizontal: 12, marginTop: 4,
-    backgroundColor: '#34C759', borderRadius: 10, paddingVertical: 15, alignItems: 'center',
-  },
-  doneBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  privacyText: { ...Typography.bodySm, color: Colors.textMuted, lineHeight: 18 },
 });

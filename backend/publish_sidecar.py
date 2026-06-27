@@ -117,6 +117,19 @@ class PublishResult(BaseModel):
     error: str | None = None
 
 
+class AccountInfoRequest(BaseModel):
+    username: str
+    password: str
+
+
+class AccountInfoResult(BaseModel):
+    success: bool
+    username: str | None = None
+    full_name: str | None = None
+    profile_pic_url: str | None = None
+    error: str | None = None
+
+
 class LocationItem(BaseModel):
     pk: str
     name: str
@@ -183,7 +196,7 @@ class MatchFaceItem(BaseModel):
 class MatchFaceRequest(BaseModel):
     reference_embedding: list[float]
     photos: list[MatchFaceItem]
-    threshold: float = 0.6   # cosine similarity cutoff (Facenet128 default)
+    threshold: float = 0.45  # cosine similarity cutoff — 0.45 handles angle/lighting variation
 
 
 class MatchFaceResultItem(BaseModel):
@@ -399,29 +412,42 @@ def register_face(req: RegisterFaceRequest):
     Extract a face embedding from a reference photo.
     Called once during "Who Are You?" setup. Returns a Facenet128 embedding vector
     that the app stores locally and uses for per-curation face matching.
+
+    Fallback chain: MTCNN strict → MTCNN permissive → opencv permissive.
+    MTCNN's strict mode rejects faces below its internal confidence threshold
+    even when a face is clearly visible, so we retry with looser settings
+    before giving up.
     """
-    try:
-        img = decode_b64_to_cv2(req.photo_b64)
-        if img is None:
-            return RegisterFaceResult(success=False, error="Could not decode image")
-        result = DeepFace.represent(
-            img,
-            model_name='Facenet',
-            enforce_detection=True,   # Raise if no face found
-            detector_backend=DEEPFACE_BACKEND,
-        )
-        embedding = result[0]['embedding']
-        print(f"[sidecar] register_face: embedding extracted ({len(embedding)} dims)")
-        return RegisterFaceResult(success=True, embedding=embedding)
-    except Exception as e:
-        err_msg = str(e)
-        print(f"[sidecar] register_face error: {err_msg}")
-        if "face" in err_msg.lower() or "detect" in err_msg.lower():
-            return RegisterFaceResult(
-                success=False,
-                error="No face detected — try a clearer, well-lit photo where your face is fully visible"
+    img = decode_b64_to_cv2(req.photo_b64)
+    if img is None:
+        return RegisterFaceResult(success=False, error="Could not decode image")
+
+    attempts = [
+        (DEEPFACE_BACKEND, True),   # preferred: strict detection
+        (DEEPFACE_BACKEND, False),  # fallback 1: permissive — catches borderline confidence
+        ('opencv', False),          # fallback 2: opencv is most permissive, works on nearly all photos
+    ]
+
+    for backend, enforce in attempts:
+        try:
+            result = DeepFace.represent(
+                img,
+                model_name='Facenet',
+                enforce_detection=enforce,
+                detector_backend=backend,
             )
-        return RegisterFaceResult(success=False, error=err_msg)
+            if not result:
+                continue
+            embedding = result[0]['embedding']
+            print(f"[sidecar] register_face: OK (backend={backend}, enforce={enforce}, dims={len(embedding)})")
+            return RegisterFaceResult(success=True, embedding=embedding)
+        except Exception as e:
+            print(f"[sidecar] register_face attempt failed (backend={backend}, enforce={enforce}): {e}")
+
+    return RegisterFaceResult(
+        success=False,
+        error="No face detected — try a clearer, well-lit photo where your face is fully visible and centred",
+    )
 
 
 @app.post("/match_faces", response_model=MatchFaceResult)
@@ -479,6 +505,26 @@ def match_faces(req: MatchFaceRequest):
             results.append(MatchFaceResultItem(index=photo.index, user_face_present=True, similarity=0.5))
 
     return MatchFaceResult(matches=results)
+
+
+@app.post("/account_info", response_model=AccountInfoResult)
+def account_info(req: AccountInfoRequest):
+    """
+    Return the logged-in user's profile: full name, username, and avatar URL.
+    Used to auto-fill the app's Profile screen after connecting Instagram.
+    """
+    try:
+        cl = get_logged_in_client(req.username, req.password)
+        info = cl.account_info()
+        return AccountInfoResult(
+            success=True,
+            username=info.username,
+            full_name=info.full_name or None,
+            profile_pic_url=str(info.profile_pic_url) if info.profile_pic_url else None,
+        )
+    except Exception as e:
+        print(f"[sidecar] account_info error: {e}")
+        return AccountInfoResult(success=False, error=str(e))
 
 
 @app.post("/publish", response_model=PublishResult)

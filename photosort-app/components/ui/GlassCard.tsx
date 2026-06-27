@@ -21,8 +21,8 @@ export default function GlassCard({ children, style, intensity = 40 }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: Radius.xl,
+    borderRadius: Radius.card,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.4)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
 });

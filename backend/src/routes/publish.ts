@@ -71,4 +71,20 @@ export async function publishRoutes(app: FastifyInstance) {
     await deleteSidecar(`/session/${request.params.username}`);
     return { success: true };
   });
+
+  // ── POST /api/account_info ────────────────────────────────────────────────────
+  // Returns the logged-in Instagram user's name/handle/avatar for the Profile screen.
+  app.post<{ Body: { username?: string; password?: string } }>('/api/account_info', async (request, reply) => {
+    const { username, password } = request.body;
+    if (!username || !password) {
+      return reply.send({ success: false, error: 'Username and password are required.' });
+    }
+    try {
+      const data = await fetchSidecar('/account_info', { username, password }, 30_000);
+      return reply.send(data);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      return reply.send({ success: false, error: message });
+    }
+  });
 }

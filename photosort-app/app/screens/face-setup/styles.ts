@@ -1,73 +1,56 @@
 import { StyleSheet } from 'react-native';
+import { Colors, Radius, Spacing, Typography } from '../../../lib/theme';
 
 export const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FAFAFA' },
-  center: { alignItems: 'center', justifyContent: 'center' },
-
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 13,
-    backgroundColor: '#FFF', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#DBDBDB',
+  root: { flex: 1, backgroundColor: Colors.bg },
+  body: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xxl,
+    gap: Spacing.lg,
   },
-  headerBack: { color: '#262626', fontSize: 16, width: 50 },
-  headerTitle: { color: '#262626', fontSize: 16, fontWeight: '600' },
-
-  scroll: { padding: 16, gap: 16 },
-
-  // Current identity card
-  currentCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#F0FFF4', borderRadius: 12, padding: 14,
-    borderWidth: 1, borderColor: '#BBDDC8',
+  ring: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    padding: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  currentThumb: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#DDD' },
-  currentTitle: { fontSize: 14, fontWeight: '600', color: '#1A472A' },
-  currentSub: { fontSize: 12, color: '#4A7C59', marginTop: 2 },
-  clearBtn: { color: '#FF3B30', fontSize: 13, fontWeight: '500' },
-
-  // Success state
-  successCard: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    backgroundColor: '#F0FFF4', borderRadius: 12, padding: 16,
-    borderWidth: 1, borderColor: '#BBDDC8',
+  inner: {
+    flex: 1,
+    alignSelf: 'stretch',
+    borderRadius: 66,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
-  successIcon: { fontSize: 28, color: '#34C759' },
-  successTitle: { fontSize: 15, fontWeight: '700', color: '#1A472A', marginBottom: 4 },
-  successSub: { fontSize: 13, color: '#4A7C59', lineHeight: 19 },
-
-  // Explainer
-  explainerCard: {
-    backgroundColor: '#FFF', borderRadius: 12, padding: 16,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: '#DBDBDB',
+  selfie: { width: '100%', height: '100%' },
+  glyph: { fontSize: 56, color: Colors.textMuted },
+  title: { ...Typography.title, fontSize: 19, color: Colors.text, marginTop: Spacing.sm },
+  copy: {
+    ...Typography.bodyMd,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    maxWidth: 240,
+    lineHeight: 19,
   },
-  explainerTitle: { fontSize: 13, fontWeight: '700', color: '#262626', marginBottom: 8 },
-  explainerBody: { fontSize: 13, color: '#6E6E6E', lineHeight: 20 },
-
-  // Preview
-  previewSection: { alignItems: 'center', gap: 8 },
-  previewImage: { width: 220, height: 220, borderRadius: 12, backgroundColor: '#EEE' },
-  previewHint: { fontSize: 12, color: '#8E8E8E', textAlign: 'center' },
-
-  // Error
-  errorCard: { backgroundColor: '#FFF0F0', borderRadius: 10, padding: 14 },
-  errorText: { color: '#FF3B30', fontSize: 13, lineHeight: 18 },
-
-  // Buttons
-  pickBtn: {
-    backgroundColor: '#F5F5F5', borderRadius: 12, paddingVertical: 15,
-    alignItems: 'center', borderWidth: 1.5, borderColor: '#DBDBDB',
+  privacy: {
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
   },
-  pickBtnText: { fontSize: 15, fontWeight: '600', color: '#262626' },
-
-  confirmBtn: {
-    backgroundColor: '#0095F6', borderRadius: 12, paddingVertical: 15,
-    alignItems: 'center', flexDirection: 'row', justifyContent: 'center',
+  privacyText: { ...Typography.bodySm, color: Colors.textMuted },
+  error: { ...Typography.bodySm, color: Colors.error, textAlign: 'center' },
+  clear: { ...Typography.bodyMd, color: Colors.error, marginTop: Spacing.sm },
+  footer: {
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: 40,
+    gap: Spacing.md,
+    alignItems: 'center',
   },
-  confirmBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
-  btnDisabled: { opacity: 0.5 },
-
-  doneBtn: {
-    backgroundColor: '#34C759', borderRadius: 12, paddingVertical: 15, alignItems: 'center',
-  },
-  doneBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  notNow: { ...Typography.bodyMd, color: Colors.textFaint },
 });

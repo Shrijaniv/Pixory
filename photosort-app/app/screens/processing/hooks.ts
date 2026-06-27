@@ -8,7 +8,7 @@ import { learningInsight, loadLearningHistory } from '../../../lib/learning';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { clusterSummary, deduplicateBursts, filterByLocation, getPhotos, requestPermission, scoreWithBackend, selectBestPhotos, topCandidates } from '../../../lib/photos';
-import { Caption, LocalPhoto, saveSession, StoryRole, store } from '../../../lib/store';
+import { Caption, LocalPhoto, newStoryId, saveSession, StoryRole, store, upsertStory } from '../../../lib/store';
 import { Step, defaultCaptions } from './types';
 
 export function useProcessingState() {
@@ -373,6 +373,21 @@ export function useProcessingState() {
         setProgress(95);
         await saveSession();
       }
+
+      // Record this curation as a draft Story so it appears on the Home hub.
+      const storyId = newStoryId();
+      store.currentStoryId = storyId;
+      await upsertStory({
+        id: storyId,
+        title: store.vibe || 'Untitled story',
+        coverUri: store.selectedPhotos[0] ?? '',
+        photoUris: store.selectedPhotos,
+        photoCount: store.selectedPhotos.length,
+        date: Date.now(),
+        status: 'draft',
+        savedToAlbum: false,
+        persona: store.persona,
+      });
 
       push('Done! ✓', 100);
       router.replace('/review');

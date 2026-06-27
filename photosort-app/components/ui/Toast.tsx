@@ -1,15 +1,10 @@
 /**
  * Toast — brief feedback message that appears at the bottom of the screen.
- * Auto-hides after 2 seconds when visible becomes true.
+ * Auto-hides shortly after `visible` becomes true.
+ * Built on React Native's core Animated API (no native reanimated dependency).
  */
-import { useEffect } from 'react';
-import { StyleSheet, Text } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
+import { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Radius, Spacing, Typography } from '../../lib/theme';
 
@@ -20,29 +15,23 @@ interface Props {
 
 export default function Toast({ message, visible }: Props) {
   const insets = useSafeAreaInsets();
-  const opacity = useSharedValue(0);
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
-      opacity.value = withSequence(
-        withTiming(1, { duration: 200 }),
-        withTiming(1, { duration: 1600 }),
-        withTiming(0, { duration: 200 }),
-      );
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+        Animated.delay(1600),
+        Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }),
+      ]).start();
     } else {
-      opacity.value = 0;
+      opacity.setValue(0);
     }
   }, [visible, message]);
 
-  const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
-
   return (
     <Animated.View
-      style={[
-        styles.toast,
-        { bottom: insets.bottom + Spacing.xl },
-        style,
-      ]}
+      style={[styles.toast, { bottom: insets.bottom + Spacing.xl, opacity }]}
       pointerEvents="none"
     >
       <Text style={styles.text}>{message}</Text>

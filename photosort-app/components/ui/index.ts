@@ -1,10 +1,14 @@
 export { default as Badge }         from './Badge';
+export { default as Chip }          from './Chip';
 export { default as GlassCard }     from './GlassCard';
+export { default as GradientText }  from './GradientText';
 export { default as LabeledInput }  from './LabeledInput';
 export { default as PhotoCell }     from './PhotoCell';
 export { default as PrimaryButton } from './PrimaryButton';
 export { default as RadioCard }     from './RadioCard';
 export { default as ScreenHeader }  from './ScreenHeader';
 export { default as SectionCard }   from './SectionCard';
+export { default as StatusPill }    from './StatusPill';
+export { default as TabBar }        from './TabBar';
 export { default as Toast }         from './Toast';
 export { default as Toggle }        from './Toggle';

@@ -26,6 +26,23 @@ export async function publishFromDevice(params: {
   return res.json();
 }
 
+export async function fetchAccountInfo(params: {
+  username: string;
+  password: string;
+  backendUrl: string;
+}): Promise<{ success: boolean; username?: string; full_name?: string; profile_pic_url?: string; error?: string }> {
+  try {
+    const res = await fetch(`${params.backendUrl}/api/account_info`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: params.username, password: params.password }),
+    });
+    return res.json();
+  } catch (e: any) {
+    return { success: false, error: e?.message ?? 'network error' };
+  }
+}
+
 export async function searchLocation(params: {
   username: string;
   password: string;

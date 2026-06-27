@@ -73,6 +73,9 @@ export interface AppStore {
   filterByUserFace: boolean;
   profilePhotoUri: string | null;
   displayName: string;
+  handle: string;
+  /** id of the Story record for the in-progress curation (set when Review is reached). */
+  currentStoryId: string | null;
 }
 
 export const store: AppStore = {
@@ -86,7 +89,7 @@ export const store: AppStore = {
   persona: null,
   method: 'classic',
   contentMix: 'balanced',
-  backendUrl: 'https://pixory-backend-production.up.railway.app',
+  backendUrl: 'http://192.168.0.74:8000',
 
   localPhotos: [],
   selectedPhotos: [],
@@ -101,4 +104,6 @@ export const store: AppStore = {
   filterByUserFace: false,
   profilePhotoUri: null,
   displayName: '',
+  handle: '',
+  currentStoryId: null,
 };

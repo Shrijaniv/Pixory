@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import {
   KeyboardAvoidingView,
@@ -10,10 +11,11 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Chip } from '../../../components/ui';
 import { store } from '../../../lib/store';
+import { Colors, Gradients } from '../../../lib/theme';
 import { useCaptionState } from './hooks';
-import styles from './styles';
-import { MOOD_META } from './types';
+import { styles } from './styles';
 
 export default function CaptionScreen() {
   const insets = useSafeAreaInsets();
@@ -23,177 +25,118 @@ export default function CaptionScreen() {
     editedText,
     setEditedText,
     showHashtags,
-    setShowHashtags,
+    chosen,
     postLocation,
     setPostLocation,
-    chosen,
-    fullCaption,
     handleMoodSelect,
     handleShare,
   } = useCaptionState();
+
+  const photos = store.selectedPhotos;
+  const handle = store.handle || 'your_account';
+  const hashtagLine = chosen?.hashtags?.length ? chosen.hashtags.map((h) => `#${h}`).join(' ') : '';
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.headerBack}>‹ Back</Text>
+          <Text style={styles.back}>‹</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Write Caption</Text>
+        <Text style={styles.title}>Caption</Text>
         <Pressable onPress={handleShare} hitSlop={12}>
-          <Text style={styles.headerShare}>Share</Text>
+          <Text style={styles.next}>Next</Text>
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 24, gap: 16 }}
         >
-          {/* Selected photos horizontal strip */}
-          <View style={styles.photosStrip}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.photosRow}>
-              {store.selectedPhotos.map((path) => (
-                <Image
-                  key={path}
-                  source={{ uri: path }}
-                  style={styles.photoThumb}
-                  contentFit="cover"
-                  cachePolicy="memory-disk"
-                />
-              ))}
-            </ScrollView>
-            <Text style={styles.photoCount}>
-              {store.selectedPhotos.length} photo{store.selectedPhotos.length !== 1 ? 's' : ''}
-            </Text>
+          {/* Live IG preview */}
+          <View style={styles.preview}>
+            <View style={styles.previewHeader}>
+              <LinearGradient colors={Gradients.ig} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={styles.pvAvatarRing}>
+                <View style={styles.pvAvatarInner} />
+              </LinearGradient>
+              <Text style={styles.pvHandle}>{handle}</Text>
+              <Text style={styles.pvDots}>···</Text>
+            </View>
+
+            <View style={styles.pvImageSlot}>
+              {photos[0] ? (
+                <Image source={{ uri: photos[0] }} style={styles.pvImage} contentFit="cover" cachePolicy="memory-disk" />
+              ) : null}
+              {photos.length > 1 && (
+                <View style={styles.pvCountBadge}>
+                  <Text style={styles.pvCountText}>1/{photos.length}</Text>
+                </View>
+              )}
+              {photos.length > 1 && (
+                <View style={styles.pvDotsRow}>
+                  {photos.slice(0, 5).map((_, i) => (
+                    <View key={i} style={[styles.pvDot, i === 0 && styles.pvDotActive]} />
+                  ))}
+                </View>
+              )}
+            </View>
+
+            <View style={styles.pvActions}>
+              <Text style={styles.pvActionIcon}>♡</Text>
+              <Text style={styles.pvActionIcon}>▢</Text>
+              <Text style={styles.pvActionIcon}>➤</Text>
+              <View style={{ flex: 1 }} />
+              <Text style={styles.pvActionIcon}>⊟</Text>
+            </View>
+
+            <View style={styles.pvCaption}>
+              <Text style={styles.pvCaptionText} numberOfLines={2}>
+                <Text style={styles.pvCaptionHandle}>{handle} </Text>
+                {editedText}
+              </Text>
+            </View>
           </View>
 
-          {/* Mood tabs */}
-          {captions.length > 0 && (
-            <View style={styles.moodSection}>
-              <Text style={styles.sectionLabel}>Caption Style</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.moodRow}>
-                {captions.map((c) => {
-                  const meta = MOOD_META[c.mood] ?? { icon: '✦', color: '#8E8E8E' };
-                  const active = selectedMood === c.mood;
-                  return (
-                    <Pressable
-                      key={c.mood}
-                      style={[
-                        styles.moodChip,
-                        active && { backgroundColor: meta.color, borderColor: meta.color },
-                      ]}
-                      onPress={() => handleMoodSelect(c.mood)}
-                    >
-                      <Text style={styles.moodIcon}>{meta.icon}</Text>
-                      <Text style={[styles.moodLabel, active && styles.moodLabelActive]}>
-                        {c.mood.charAt(0).toUpperCase() + c.mood.slice(1)}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          )}
+          {/* Caption style chips */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+            {captions.map((c) => (
+              <Chip
+                key={c.mood}
+                label={c.mood.charAt(0).toUpperCase() + c.mood.slice(1)}
+                active={selectedMood === c.mood}
+                onPress={() => handleMoodSelect(c.mood)}
+              />
+            ))}
+          </ScrollView>
 
           {/* Caption editor */}
-          <View style={styles.editorSection}>
-            <View style={styles.editorHeader}>
-              <Text style={styles.sectionLabel}>Caption</Text>
-              <Text style={styles.charCount}>{editedText.length} chars</Text>
-            </View>
+          <View style={styles.editor}>
             <TextInput
-              style={styles.captionEditor}
+              style={styles.editorInput}
               value={editedText}
               onChangeText={setEditedText}
               multiline
-              placeholder="Write a caption..."
-              placeholderTextColor="#8E8E8E"
+              placeholder="Write a caption…"
+              placeholderTextColor={Colors.textFaint}
               textAlignVertical="top"
               scrollEnabled={false}
             />
+            {showHashtags && hashtagLine ? (
+              <Text style={styles.hashtags}>{hashtagLine}</Text>
+            ) : null}
           </View>
 
-          {/* Hashtags toggle */}
-          {chosen?.hashtags?.length ? (
-            <View style={styles.hashtagsSection}>
-              <View style={styles.hashtagsHeader}>
-                <Text style={styles.sectionLabel}>Hashtags</Text>
-                <Pressable onPress={() => setShowHashtags((v) => !v)} style={styles.toggleBtn}>
-                  <View style={[styles.toggleTrack, showHashtags && styles.toggleTrackOn]}>
-                    <View style={[styles.toggleThumb, showHashtags && styles.toggleThumbOn]} />
-                  </View>
-                </Pressable>
-              </View>
-              {showHashtags && (
-                <Text style={styles.hashtagsText}>
-                  {chosen.hashtags.map((h) => `#${h}`).join('  ')}
-                </Text>
-              )}
-            </View>
-          ) : null}
-
-          {/* Location tag */}
-          <View style={styles.hashtagsSection}>
-            <Text style={styles.sectionLabel}>Add Location</Text>
-            <TextInput
-              style={styles.locationInput}
-              placeholder="e.g. Tokyo, Japan"
-              placeholderTextColor="#C7C7CC"
-              value={postLocation}
-              onChangeText={(text) => {
-                setPostLocation(text);
-                store.postLocation = text;
-              }}
-              returnKeyType="done"
-            />
-          </View>
-
-          {/* Pixory credit — always on, not optional */}
-          <View style={styles.creditRow}>
-            <Text style={styles.creditText}>✨ Curated with Pixory</Text>
-          </View>
-
-          {/* Preview box */}
-          <View style={styles.previewSection}>
-            <Text style={styles.sectionLabel}>Preview</Text>
-            <View style={styles.previewCard}>
-              {/* IG-style post header */}
-              <View style={styles.previewPostHeader}>
-                <View style={styles.previewAvatar}>
-                  <Text style={styles.previewAvatarText}>You</Text>
-                </View>
-                <Text style={styles.previewUsername}>your_account</Text>
-              </View>
-              {/* Photo strip */}
-              <View style={styles.previewImageSlot}>
-                {store.selectedPhotos[0] ? (
-                  <Image
-                    source={{ uri: store.selectedPhotos[0] }}
-                    style={styles.previewImage}
-                    contentFit="cover"
-                    cachePolicy="memory-disk"
-                  />
-                ) : null}
-                {store.selectedPhotos.length > 1 && (
-                  <View style={styles.carouselBadge}>
-                    <Text style={styles.carouselBadgeText}>1/{store.selectedPhotos.length}</Text>
-                  </View>
-                )}
-              </View>
-              {/* Caption preview */}
-              <View style={styles.previewCaption}>
-                <Text style={styles.previewCaptionText} numberOfLines={4}>
-                  {fullCaption}
-                </Text>
-              </View>
-            </View>
-          </View>
+          {/* Location */}
+          <TextInput
+            style={styles.location}
+            placeholder="📍 Add location (optional)"
+            placeholderTextColor={Colors.textFaint}
+            value={postLocation}
+            onChangeText={(t) => { setPostLocation(t); store.postLocation = t; }}
+            returnKeyType="done"
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

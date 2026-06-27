@@ -35,11 +35,30 @@ export function useFaceSetupState() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],   // square crop encourages a clear face shot
+      mediaTypes: ['images'],
+      allowsEditing: false,  // no crop — let DeepFace work on the full photo
       quality: 0.9,
       base64: false,    // we'll encode manually after resize
+    });
+
+    if (result.canceled || !result.assets[0]) return;
+    setPickedUri(result.assets[0].uri);
+    setStatus('idle');
+    setErrorMsg('');
+  }
+
+  async function takePhoto() {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Camera needed', 'Allow camera access to take a selfie.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      cameraType: ImagePicker.CameraType.front,
+      allowsEditing: false,
+      quality: 0.9,
+      base64: false,
     });
 
     if (result.canceled || !result.assets[0]) return;
@@ -55,19 +74,26 @@ export function useFaceSetupState() {
     setErrorMsg('');
 
     try {
-      // Resize to 512px before sending — keeps payload small, sufficient for Facenet
+      // Resize to 1024px — larger than curation candidates so DeepFace has
+      // enough resolution to detect faces that aren't filling the whole frame
       const manipulated = await ImageManipulator.manipulateAsync(
         pickedUri,
-        [{ resize: { width: 512 } }],
+        [{ resize: { width: 1024 } }],
         { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG, base64: true }
       );
 
       if (!manipulated.base64) throw new Error('Failed to encode photo');
 
-      const result = await registerFace({
-        photoBase64: manipulated.base64,
-        backendUrl: store.backendUrl,
-      });
+      let result;
+      try {
+        result = await registerFace({
+          photoBase64: manipulated.base64,
+          backendUrl: store.backendUrl,
+        });
+      } catch (netErr: any) {
+        // Surface the exact URL so connection problems are diagnosable
+        throw new Error(`Can't reach backend at ${store.backendUrl} — ${netErr?.message ?? 'network error'}`);
+      }
 
       if (!result.success || !result.embedding) {
         throw new Error(result.error ?? 'No face detected');
@@ -119,6 +145,7 @@ export function useFaceSetupState() {
     currentIdentity,
     pickedUri,
     pickPhoto,
+    takePhoto,
     confirmIdentity,
     clearIdentityHandler,
     goBack: () => router.back(),

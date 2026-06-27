@@ -17,7 +17,8 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Pixory needs access to your Photos library to select and curate your photos for Instagram.",
-        "NSLocationWhenInUseUsageDescription": "Pixory uses location for geocoding place names when filtering photos."
+        "NSLocationWhenInUseUsageDescription": "Pixory uses location for geocoding place names when filtering photos.",
+        "NSCameraUsageDescription": "Pixory uses the camera so you can take a selfie for the my-face filter."
       },
       "bundleIdentifier": "com.anonymous.photosort-app"
     },

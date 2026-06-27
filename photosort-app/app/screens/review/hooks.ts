@@ -14,6 +14,7 @@ export function useReviewState() {
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [reorderMode, setReorderMode] = useState(false);
   const [isReorganizing, setIsReorganizing] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(0);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reorganizeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reorganizeAbort = useRef<AbortController | null>(null);
@@ -173,6 +174,13 @@ export function useReviewState() {
     recordOutcome(photo, 'promoted', store.persona);
   }
 
+  /** Apply a new order from the draggable filmstrip (does NOT trigger AI re-label). */
+  function reorder(orderedUris: string[]) {
+    skipReorganizeRef.current = true;
+    setSelected(orderedUris.map((uri, i) => ({ localUri: uri, order: i + 1 })));
+    store.selectedPhotos = orderedUris;
+  }
+
   function moveUp(index: number) {
     if (index === 0) return;
     setSelected((prev) => {
@@ -241,6 +249,12 @@ export function useReviewState() {
     (p) => p.isFavorite && !selectedUriSet.has(p.localUri) && !runnerUpUriSet.has(p.localUri),
   );
 
+  // Combined "More matches" tray: runner-ups + favorites in one list (favorites flagged).
+  const moreMatches: LocalPhoto[] = [
+    ...favoritePhotos.map((p) => ({ ...p, isFavorite: true })),
+    ...runnerUps.filter((p) => !selectedUriSet.has(p.localUri)),
+  ].filter((p, i, arr) => arr.findIndex((q) => q.localUri === p.localUri) === i);
+
   return {
     selected,
     runnerUps,
@@ -260,6 +274,10 @@ export function useReviewState() {
     missingBeat,
     rolesByUri,
     favoritePhotos,
+    moreMatches,
+    focusedIndex,
+    setFocusedIndex,
+    reorder,
     deselect,
     promote,
     moveUp,

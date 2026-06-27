@@ -1,147 +1,111 @@
 import { Image } from 'expo-image';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { PrimaryButton, ScreenHeader } from '../../../components/ui';
+import { Gradients } from '../../../lib/theme';
 import { useFaceSetupState } from './hooks';
 import { styles } from './styles';
 
 export default function FaceSetupScreen() {
-  const insets = useSafeAreaInsets();
   const {
     status,
     errorMsg,
     currentIdentity,
     pickedUri,
     pickPhoto,
+    takePhoto,
     confirmIdentity,
     clearIdentityHandler,
     goBack,
   } = useFaceSetupState();
 
-  if (status === 'loading') {
-    return (
-      <View style={[styles.root, styles.center, { paddingTop: insets.top }]}>
-        <ActivityIndicator color="#0095F6" />
-      </View>
-    );
-  }
-
-  const showPreview = pickedUri && status !== 'success';
+  const previewUri = pickedUri ?? currentIdentity?.refPhotoUri ?? null;
+  const processing = status === 'processing';
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable onPress={goBack} hitSlop={12}>
-          <Text style={styles.headerBack}>‹ Back</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Who Are You?</Text>
-        <View style={{ width: 50 }} />
-      </View>
+    <View style={styles.root}>
+      <ScreenHeader title="Add a selfie first" onBack={goBack} />
 
-      <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Current identity */}
-        {currentIdentity && status !== 'success' && (
-          <View style={styles.currentCard}>
-            <Image
-              source={{ uri: currentIdentity.refPhotoUri }}
-              style={styles.currentThumb}
-              contentFit="cover"
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.currentTitle}>Identity set ✓</Text>
-              <Text style={styles.currentSub}>
-                Set {new Date(currentIdentity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </Text>
-              <Text style={styles.currentSub}>Tap "Change photo" to update it</Text>
-            </View>
-            <Pressable onPress={clearIdentityHandler} hitSlop={8}>
-              <Text style={styles.clearBtn}>Clear</Text>
-            </Pressable>
+      <View style={styles.body}>
+        {/* Gradient ring around the selfie / glyph */}
+        <LinearGradient
+          colors={Gradients.accent}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.ring}
+        >
+          <View style={styles.inner}>
+            {previewUri ? (
+              <Image source={{ uri: previewUri }} style={styles.selfie} contentFit="cover" />
+            ) : (
+              <Text style={styles.glyph}>☺</Text>
+            )}
           </View>
-        )}
+        </LinearGradient>
 
-        {/* Success state */}
-        {status === 'success' && (
-          <View style={styles.successCard}>
-            <Text style={styles.successIcon}>✓</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.successTitle}>You're all set!</Text>
-              <Text style={styles.successSub}>
-                Pixory now knows what you look like. Turn on "Only photos with me" on the home screen to filter your curations.
-              </Text>
-            </View>
-          </View>
-        )}
+        <Text style={styles.title}>
+          {status === 'success'
+            ? 'You’re all set'
+            : currentIdentity && !pickedUri
+            ? 'Update your selfie'
+            : 'Add a selfie first'}
+        </Text>
+        <Text style={styles.copy}>
+          {currentIdentity && !pickedUri
+            ? 'This is your saved face. Take or pick a new selfie to replace it.'
+            : 'The my-face filter learns what you look like so it can keep only the photos you’re in. Your face stays on this device — landscapes and no-face photos are always kept.'}
+        </Text>
 
-        {/* Explainer */}
-        <View style={styles.explainerCard}>
-          <Text style={styles.explainerTitle}>How it works</Text>
-          <Text style={styles.explainerBody}>
-            Pick a photo where your face is clearly visible. Pixory extracts a face signature
-            and stores it only on this device — it's never uploaded or shared.{'\n\n'}
-            During curation, photos that contain faces but not yours are automatically removed.
-            Landscapes, food, and no-face photos are always kept.
-          </Text>
+        <View style={styles.privacy}>
+          <Text style={styles.privacyText}>🔒  Stays on this device. Never uploaded.</Text>
         </View>
 
-        {/* Photo preview */}
-        {showPreview && (
-          <View style={styles.previewSection}>
-            <Image
-              source={{ uri: pickedUri }}
-              style={styles.previewImage}
-              contentFit="cover"
-            />
-            <Text style={styles.previewHint}>Make sure your face is clearly visible and well-lit</Text>
-          </View>
-        )}
+        {status === 'error' ? <Text style={styles.error}>⚠ {errorMsg}</Text> : null}
+        {currentIdentity && status !== 'success' ? (
+          <Pressable onPress={clearIdentityHandler} hitSlop={8}>
+            <Text style={styles.clear}>Clear saved face</Text>
+          </Pressable>
+        ) : null}
+      </View>
 
-        {/* Error */}
-        {status === 'error' && (
-          <View style={styles.errorCard}>
-            <Text style={styles.errorText}>⚠ {errorMsg}</Text>
-          </View>
-        )}
-
-        {/* Actions */}
-        {status !== 'success' && (
+      <View style={styles.footer}>
+        {status === 'success' ? (
+          <PrimaryButton label="Done" variant="gradient" onPress={goBack} />
+        ) : pickedUri ? (
           <>
-            <Pressable style={styles.pickBtn} onPress={pickPhoto} disabled={status === 'processing'}>
-              <Text style={styles.pickBtnText}>
-                {currentIdentity ? '📷  Change photo' : '📷  Pick a photo of yourself'}
-              </Text>
-            </Pressable>
-
-            {showPreview && (
-              <Pressable
-                style={[styles.confirmBtn, status === 'processing' && styles.btnDisabled]}
-                onPress={status === 'processing' ? undefined : confirmIdentity}
-              >
-                {status === 'processing' ? (
-                  <><ActivityIndicator color="#FFF" /><Text style={styles.confirmBtnText}>  Analysing...</Text></>
-                ) : (
-                  <Text style={styles.confirmBtnText}>Confirm — That's Me</Text>
-                )}
+            <PrimaryButton
+              label={processing ? 'Analysing…' : 'Confirm — that’s me'}
+              variant="gradient"
+              loading={processing}
+              onPress={confirmIdentity}
+            />
+            {!processing && (
+              <Pressable onPress={takePhoto} hitSlop={8}>
+                <Text style={styles.notNow}>Retake / pick another</Text>
               </Pressable>
             )}
           </>
+        ) : (
+          <>
+            <PrimaryButton
+              label={currentIdentity ? '📷  Take a new selfie' : '📷  Take a selfie'}
+              variant="gradient"
+              onPress={takePhoto}
+            />
+            <PrimaryButton
+              label={currentIdentity ? 'Choose from library' : 'Choose from library'}
+              variant="secondary"
+              onPress={pickPhoto}
+            />
+          </>
         )}
-
-        {status === 'success' && (
-          <Pressable style={styles.doneBtn} onPress={goBack}>
-            <Text style={styles.doneBtnText}>Done</Text>
+        {status !== 'success' && !pickedUri && (
+          <Pressable onPress={goBack} hitSlop={8} disabled={processing}>
+            <Text style={styles.notNow}>Not now</Text>
           </Pressable>
         )}
-      </ScrollView>
+        {processing && <ActivityIndicator style={{ marginTop: 8 }} color="#FFF" />}
+      </View>
     </View>
   );
 }

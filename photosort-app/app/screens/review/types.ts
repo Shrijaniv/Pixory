@@ -20,3 +20,11 @@ export const ROLE_COLORS: Record<string, string> = {
   detail: '#C77DFF',  // purple
   closer: '#FF3B5C',  // pink-red
 };
+
+export const ROLE_LABELS: Record<string, string> = {
+  hook:   '🎬 The hook',
+  world:  '🌍 The world',
+  life:   '✨ The life',
+  detail: '🔍 The detail',
+  closer: '🎯 The closer',
+};

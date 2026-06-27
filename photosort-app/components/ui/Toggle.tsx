@@ -1,16 +1,11 @@
 /**
- * Toggle — iOS-style on/off switch.
- * Replaces the toggleTrack/toggleThumb inline implementation across screens.
+ * Toggle — 38×22 pill switch. On = amber→coral gradient; off = dark track.
+ * Built on React Native's core Animated API (no native reanimated dependency).
  */
-import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, {
-  interpolateColor,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
-import { Colors } from '../../lib/theme';
-import { useEffect } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useRef } from 'react';
+import { Animated, Pressable, StyleSheet } from 'react-native';
+import { Colors, Gradients } from '../../lib/theme';
 
 interface Props {
   value: boolean;
@@ -18,40 +13,42 @@ interface Props {
   disabled?: boolean;
 }
 
-const TRACK_W = 51;
-const TRACK_H = 31;
-const THUMB = 27;
-const TRAVEL = TRACK_W - THUMB - 4; // 4 = 2px padding each side
+const TRACK_W = 38;
+const TRACK_H = 22;
+const THUMB = 18;
+const TRAVEL = TRACK_W - THUMB - 4; // 2px padding each side
 
 export default function Toggle({ value, onChange, disabled = false }: Props) {
-  const progress = useSharedValue(value ? 1 : 0);
+  const progress = useRef(new Animated.Value(value ? 1 : 0)).current;
 
   useEffect(() => {
-    progress.value = withTiming(value ? 1 : 0, { duration: 200 });
+    Animated.timing(progress, {
+      toValue: value ? 1 : 0,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
   }, [value]);
 
-  const trackStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(
-      progress.value,
-      [0, 1],
-      [Colors.border, Colors.success],
-    ),
-  }));
-
-  const thumbStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: progress.value * TRAVEL }],
-  }));
+  const translateX = progress.interpolate({ inputRange: [0, 1], outputRange: [0, TRAVEL] });
 
   return (
     <Pressable
       onPress={() => !disabled && onChange(!value)}
       accessibilityRole="switch"
       accessibilityState={{ checked: value, disabled }}
-      style={{ opacity: disabled ? 0.4 : 1 }}
+      style={[styles.track, { opacity: disabled ? 0.4 : 1 }]}
     >
-      <Animated.View style={[styles.track, trackStyle]}>
-        <Animated.View style={[styles.thumb, thumbStyle]} />
+      <Animated.View
+        style={[StyleSheet.absoluteFill, { opacity: progress, borderRadius: TRACK_H / 2, overflow: 'hidden' }]}
+      >
+        <LinearGradient
+          colors={Gradients.accent}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
       </Animated.View>
+      <Animated.View style={[styles.thumb, { transform: [{ translateX }] }]} />
     </Pressable>
   );
 }
@@ -63,16 +60,12 @@ const styles = StyleSheet.create({
     borderRadius: TRACK_H / 2,
     padding: 2,
     justifyContent: 'center',
+    backgroundColor: Colors.toggleOff,
   },
   thumb: {
     width: THUMB,
     height: THUMB,
     borderRadius: THUMB / 2,
     backgroundColor: '#FFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.25,
-    shadowRadius: 2,
-    elevation: 2,
   },
 });

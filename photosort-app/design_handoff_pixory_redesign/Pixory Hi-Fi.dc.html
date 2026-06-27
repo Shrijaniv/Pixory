@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%,100% { opacity:.45 } 50% { opacity:1 } }
+</style>
+</helmet>
+
+<!-- ===================== TITLE ===================== -->
+<div style="position:absolute;left:80px;top:40px;width:900px;font-family:'Schibsted Grotesk',sans-serif">
+  <div style="font:800 32px 'Schibsted Grotesk';letter-spacing:-0.02em;color:#1a1a1a">Pixory — Hi-Fi Design System</div>
+  <div style="font:500 15px 'Schibsted Grotesk';color:#777;margin-top:6px;line-height:1.5">Dark, Instagram-flavored — Home A (hub) + filmstrip Review, per your picks.</div>
+</div>
+
+<!-- ===================== SYSTEM BOARD ===================== -->
+<div style="position:absolute;left:80px;top:172px;width:1180px">
+  <div data-drags-parent="1" style="position:absolute;top:-25px;left:2px;font:600 14px 'Schibsted Grotesk';color:#888">Foundations</div>
+  <div style="background:#0B0B0D;border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:30px 32px;font-family:'Schibsted Grotesk',sans-serif;color:#FAFAFA;box-shadow:0 20px 50px rgba(0,0,0,.2)">
+
+    <!-- logo lockup -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#FFC65A,#FFAE3D,#FF7A45,#FF5A4E,#FF8A45);display:flex;align-items:center;justify-content:center;font:800 20px 'Schibsted Grotesk';color:#fff">P</div>
+        <div>
+          <div style="font:800 22px 'Schibsted Grotesk';letter-spacing:-0.02em">Pixory</div>
+          <div style="font:600 9px 'Space Mono';letter-spacing:.15em;color:#7A7A82;text-transform:uppercase">Story-first photo curation</div>
+        </div>
+      </div>
+      <div style="font:600 10px 'Space Mono';letter-spacing:.12em;color:#5E5E66;text-transform:uppercase">Theme · Black · Sunset accent</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.15fr 1fr 1.25fr;gap:30px">
+
+      <!-- COLORS -->
+      <div>
+        <div style="font:600 10px 'Space Mono';letter-spacing:.14em;color:#6E6E76;text-transform:uppercase;margin-bottom:14px">Palette</div>
+        <div style="height:56px;border-radius:13px;background:linear-gradient(135deg,#FFC65A,#FFAE3D,#FF7A45,#FF5A4E,#FF8A45);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);margin-bottom:6px;display:flex;align-items:flex-end;padding:8px"><span style="font:600 9px 'Space Mono';color:rgba(255,255,255,.95)">SUNSET · amber→coral accent</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+          <div><div style="height:34px;border-radius:8px;background:#0A0A0B;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)"></div><div style="font:400 8px 'Space Mono';color:#7A7A82;margin-top:4px">#0A0A0B</div></div>
+          <div><div style="height:34px;border-radius:8px;background:#161618;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)"></div><div style="font:400 8px 'Space Mono';color:#7A7A82;margin-top:4px">#161618</div></div>
+          <div><div style="height:34px;border-radius:8px;background:#1F1F22;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)"></div><div style="font:400 8px 'Space Mono';color:#7A7A82;margin-top:4px">#1F1F22</div></div>
+          <div><div style="height:34px;border-radius:8px;background:#FF5A4E"></div><div style="font:400 8px 'Space Mono';color:#7A7A82;margin-top:4px">#FF5A4E</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:6px">
+          <div><div style="height:34px;border-radius:8px;background:#FAFAFA"></div><div style="font:400 8px 'Space Mono';color:#7A7A82;margin-top:4px">text</div></div>
+          <div><div style="height:34px;border-radius:8px;background:#9A9AA2"></div><div style="font:400 8px 'Space Mono';color:#7A7A82;margin-top:4px">muted</div></div>
+          <div><div style="height:34px;border-radius:8px;background:#5E5E66"></div><div style="font:400 8px 'Space Mono';color:#7A7A82;margin-top:4px">faint</div></div>
+          <div><div style="height:34px;border-radius:8px;background:#0A0A0B;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)"></div><div style="font:400 8px 'Space Mono';color:#7A7A82;margin-top:4px">line</div></div>
+        </div>
+      </div>
+
+      <!-- TYPE -->
+      <div>
+        <div style="font:600 10px 'Space Mono';letter-spacing:.14em;color:#6E6E76;text-transform:uppercase;margin-bottom:14px">Type · Schibsted Grotesk + Space Mono</div>
+        <div style="font:800 40px 'Schibsted Grotesk';letter-spacing:-0.03em;line-height:1">Aa</div>
+        <div style="margin-top:14px;display:flex;flex-direction:column;gap:9px">
+          <div style="font:800 22px 'Schibsted Grotesk';letter-spacing:-0.02em">Display / 800</div>
+          <div style="font:700 16px 'Schibsted Grotesk'">Title / 700</div>
+          <div style="font:400 13px 'Schibsted Grotesk';color:#C8C8CE">Body copy sits at 400–500 for comfortable reading on dark.</div>
+          <div style="font:600 10px 'Space Mono';letter-spacing:.16em;color:#9A9AA2;text-transform:uppercase">Label · mono caps</div>
+        </div>
+      </div>
+
+      <!-- COMPONENTS -->
+      <div>
+        <div style="font:600 10px 'Space Mono';letter-spacing:.14em;color:#6E6E76;text-transform:uppercase;margin-bottom:14px">Components</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div style="flex:1;text-align:center;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);border-radius:12px;padding:11px;font:700 12px 'Schibsted Grotesk';color:#fff">Primary</div>
+          <div style="flex:1;text-align:center;background:#1F1F22;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:11px;font:700 12px 'Schibsted Grotesk';color:#FAFAFA">Secondary</div>
+        </div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px">
+          <span style="padding:7px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#fff;background:linear-gradient(135deg,#FFAE3D,#FF5A4E)">Aesthete</span>
+          <span style="padding:7px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#C8C8CE;border:1px solid rgba(255,255,255,.16)">Social</span>
+          <span style="padding:7px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#C8C8CE;border:1px solid rgba(255,255,255,.16)">Logger</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;background:#161618;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:11px 13px;margin-bottom:10px"><span style="font:400 12px 'Schibsted Grotesk';color:#5E5E66">Search or type a place…</span></div>
+        <div style="display:flex;gap:8px">
+          <div style="width:54px;height:54px;border-radius:12px;background:linear-gradient(150deg,#F6B45A,#E5613F 55%,#7E3B6E);box-shadow:inset 0 -16px 28px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.14)"></div>
+          <div style="width:54px;height:54px;border-radius:12px;background:linear-gradient(150deg,#5FA8C9,#2F6F8F 50%,#16314A);box-shadow:inset 0 -16px 28px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.14)"></div>
+          <div style="width:54px;height:54px;border-radius:12px;background:linear-gradient(150deg,#7FB07E,#3E7A55 55%,#1E3A2C);box-shadow:inset 0 -16px 28px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.14)"></div>
+          <div style="flex:1;display:flex;align-items:center;justify-content:center;font:600 9px 'Space Mono';color:#5E5E66;text-align:center;line-height:1.3">photo<br>tiles</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SCREENS HEADER ===================== -->
+<div style="position:absolute;left:80px;top:585px;font:800 22px 'Schibsted Grotesk';letter-spacing:-0.02em;color:#1f1f1f;font-family:'Schibsted Grotesk',sans-serif">The screens</div>
+
+<!-- ============ HOME HUB ============ -->
+<div style="position:absolute;left:80px;top:650px;width:300px;font-family:'Schibsted Grotesk',sans-serif">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;left:4px;font:600 13px 'Schibsted Grotesk';color:#888">Home · the hub <span style="color:#c0392b">✓</span></div>
+  <div style="position:relative;width:300px;height:650px;background:#0A0A0B;border-radius:42px;border:7px solid #000;box-shadow:0 30px 70px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;color:#FAFAFA">
+    <div style="position:absolute;top:9px;left:50%;transform:translateX(-50%);width:88px;height:25px;background:#000;border-radius:13px;z-index:30"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;justify-content:space-between;padding:14px 22px 0;font:700 12px 'Space Mono';z-index:20"><span>9:41</span><span style="display:flex;align-items:center;gap:5px">5G<span style="width:20px;height:10px;border:1.2px solid #fff;border-radius:3px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;bottom:1.5px;left:1.5px;right:5px;background:#fff;border-radius:1px"></span></span></span></div>
+
+    <div style="position:absolute;top:46px;left:0;right:0;bottom:0;display:flex;flex-direction:column">
+      <!-- header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 14px">
+        <div style="font:800 24px 'Schibsted Grotesk';letter-spacing:-0.02em;background:linear-gradient(120deg,#FFC65A,#FFAE3D,#FF5A4E);-webkit-background-clip:text;background-clip:text;color:transparent">Pixory</div>
+        <div style="width:34px;height:34px;border-radius:50%;padding:2px;background:linear-gradient(135deg,#FFAE3D,#FF5A4E)"><div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(150deg,#E8A0A8,#C76B86 55%,#5E3B57);box-shadow:inset 0 0 0 2px #0A0A0B"></div></div>
+      </div>
+
+      <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:16px">
+        <!-- hero create -->
+        <div style="position:relative;border-radius:22px;padding:20px;background:linear-gradient(130deg,#FFAE3D,#FF7A45,#FF5A4E);overflow:hidden">
+          <div style="position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.14)"></div>
+          <div style="position:relative">
+            <div style="font:800 19px 'Schibsted Grotesk';letter-spacing:-0.01em;color:#fff">Create a new story</div>
+            <div style="font:500 12px 'Schibsted Grotesk';color:rgba(255,255,255,.92);margin-top:5px;width:175px;line-height:1.45">Dates, a place &amp; a vibe → your 10 best, sequenced.</div>
+            <div style="display:inline-flex;align-items:center;gap:7px;margin-top:14px;background:#fff;color:#111;border-radius:999px;padding:9px 15px;font:700 12px 'Schibsted Grotesk'">＋ Start <span style="font-size:14px">→</span></div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font:600 10px 'Space Mono';letter-spacing:.14em;color:#7A7A82;text-transform:uppercase">Your stories</span>
+          <span style="font:600 11px 'Schibsted Grotesk';color:#9A9AA2">See all</span>
+        </div>
+
+        <!-- story card 1 -->
+        <div style="display:flex;align-items:center;gap:13px">
+          <div style="width:58px;height:58px;border-radius:14px;background:linear-gradient(150deg,#E9A85C,#C25A33 55%,#6E2F2A);box-shadow:inset 0 -16px 28px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.14)"></div>
+          <div style="flex:1">
+            <div style="font:700 14px 'Schibsted Grotesk'">Tokyo, in bites</div>
+            <div style="font:500 11px 'Schibsted Grotesk';color:#7A7A82;margin-top:3px">Apr 3 · 10 photos</div>
+          </div>
+          <span style="font:600 9px 'Space Mono';letter-spacing:.05em;color:#4ED17A;background:rgba(78,209,122,.12);padding:5px 9px;border-radius:999px">PUBLISHED</span>
+        </div>
+        <!-- story card 2 -->
+        <div style="display:flex;align-items:center;gap:13px">
+          <div style="width:58px;height:58px;border-radius:14px;background:linear-gradient(150deg,#5FA8C9,#2F6F8F 50%,#16314A);box-shadow:inset 0 -16px 28px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.14)"></div>
+          <div style="flex:1">
+            <div style="font:700 14px 'Schibsted Grotesk'">Amalfi slow days</div>
+            <div style="font:500 11px 'Schibsted Grotesk';color:#7A7A82;margin-top:3px">Mar 19 · 10 photos</div>
+          </div>
+          <span style="font:600 9px 'Space Mono';letter-spacing:.05em;color:#4ED17A;background:rgba(78,209,122,.12);padding:5px 9px;border-radius:999px">PUBLISHED</span>
+        </div>
+        <!-- story card 3 draft -->
+        <div style="display:flex;align-items:center;gap:13px;opacity:.86">
+          <div style="width:58px;height:58px;border-radius:14px;background:linear-gradient(150deg,#6B5BAE,#A14C84 55%,#E08A5E);box-shadow:inset 0 -16px 28px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.14)"></div>
+          <div style="flex:1">
+            <div style="font:700 14px 'Schibsted Grotesk'">Weekend upstate</div>
+            <div style="font:500 11px 'Schibsted Grotesk';color:#7A7A82;margin-top:3px">Feb 28 · 7 selected</div>
+          </div>
+          <span style="font:600 9px 'Space Mono';letter-spacing:.05em;color:#E0A05A;background:rgba(224,160,90,.12);padding:5px 9px;border-radius:999px">DRAFT</span>
+        </div>
+      </div>
+
+      <!-- tab bar -->
+      <div style="display:flex;align-items:center;justify-content:space-around;padding:12px 24px 22px;border-top:1px solid rgba(255,255,255,.07);background:rgba(10,10,11,.8)">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:18px">⌂</span><span style="font:700 9px 'Schibsted Grotesk'">Home</span></div>
+        <div style="width:46px;height:46px;border-radius:16px;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;box-shadow:0 8px 20px rgba(255,90,78,.45);margin-top:-8px">＋</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#5E5E66"><span style="font-size:18px">◔</span><span style="font:600 9px 'Schibsted Grotesk'">Profile</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="font:500 11px 'Schibsted Grotesk';color:#999;margin-top:14px;width:280px;line-height:1.45">A real home — past stories &amp; drafts, one clear gradient CTA into the flow.</div>
+</div>
+
+<!-- ============ NEW STORY ============ -->
+<div style="position:absolute;left:470px;top:650px;width:300px;font-family:'Schibsted Grotesk',sans-serif">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;left:4px;font:600 13px 'Schibsted Grotesk';color:#888">New Story · setup</div>
+  <div style="position:relative;width:300px;height:650px;background:#0A0A0B;border-radius:42px;border:7px solid #000;box-shadow:0 30px 70px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;color:#FAFAFA">
+    <div style="position:absolute;top:9px;left:50%;transform:translateX(-50%);width:88px;height:25px;background:#000;border-radius:13px;z-index:30"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;justify-content:space-between;padding:14px 22px 0;font:700 12px 'Space Mono';z-index:20"><span>9:41</span><span style="display:flex;align-items:center;gap:5px">5G<span style="width:20px;height:10px;border:1.2px solid #fff;border-radius:3px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;bottom:1.5px;left:1.5px;right:5px;background:#fff;border-radius:1px"></span></span></span></div>
+
+    <div style="position:absolute;top:46px;left:0;right:0;bottom:0;display:flex;flex-direction:column">
+      <!-- header + steps -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 4px">
+        <span style="font-size:22px;color:#9A9AA2">‹</span>
+        <span style="font:700 14px 'Schibsted Grotesk'">New Story</span>
+        <span style="width:16px"></span>
+      </div>
+
+      <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:16px">
+        <!-- story hero input -->
+        <div>
+          <div style="font:600 10px 'Space Mono';letter-spacing:.14em;color:#7A7A82;text-transform:uppercase;margin-bottom:9px">What's the story?</div>
+          <div style="background:#161618;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:15px;min-height:70px">
+            <div style="font:500 14px 'Schibsted Grotesk';color:#FAFAFA;line-height:1.5">Three days eating through Tokyo<span style="color:#FF5A4E">|</span></div>
+            <div style="font:400 11px 'Schibsted Grotesk';color:#5E5E66;margin-top:8px">The narrative shapes scoring, selection &amp; captions.</div>
+          </div>
+        </div>
+        <!-- date + place -->
+        <div style="display:flex;gap:11px">
+          <div style="flex:1;background:#161618;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 13px"><div style="font:600 9px 'Space Mono';letter-spacing:.1em;color:#7A7A82;text-transform:uppercase">📅 Dates</div><div style="font:700 13px 'Schibsted Grotesk';margin-top:5px">Apr 3 – 6</div></div>
+          <div style="flex:1;background:#161618;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 13px"><div style="font:600 9px 'Space Mono';letter-spacing:.1em;color:#7A7A82;text-transform:uppercase">📍 Place</div><div style="font:600 13px 'Schibsted Grotesk';color:#5E5E66;margin-top:5px">Optional</div></div>
+        </div>
+        <!-- persona -->
+        <div>
+          <div style="font:600 10px 'Space Mono';letter-spacing:.14em;color:#7A7A82;text-transform:uppercase;margin-bottom:9px">Your posting style</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#fff;background:linear-gradient(135deg,#FFAE3D,#FF5A4E)">Aesthete</span>
+            <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#C8C8CE;border:1px solid rgba(255,255,255,.16)">Social</span>
+            <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#C8C8CE;border:1px solid rgba(255,255,255,.16)">Logger</span>
+            <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#C8C8CE;border:1px solid rgba(255,255,255,.16)">Storyteller</span>
+            <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#C8C8CE;border:1px solid rgba(255,255,255,.16)">Mood</span>
+          </div>
+          <!-- live description -->
+          <div style="display:flex;gap:9px;background:rgba(255,90,78,.08);border:1px solid rgba(255,90,78,.18);border-radius:13px;padding:12px;margin-top:11px">
+            <span style="font-size:13px">✦</span>
+            <div style="font:500 11px 'Schibsted Grotesk';color:#C8C8CE;line-height:1.5"><b style="color:#fff">The Aesthete</b> keeps a consistent grid — picks the shot that fits the palette over the one where everyone's laughing hardest.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- footer CTA -->
+      <div style="padding:12px 20px 22px;border-top:1px solid rgba(255,255,255,.07)">
+        <div style="display:flex;align-items:center;justify-content:space-between;font:500 11px 'Schibsted Grotesk';color:#9A9AA2;padding-bottom:11px"><span>⚙ My-face filter &amp; advanced</span><span>›</span></div>
+        <div style="text-align:center;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);border-radius:15px;padding:15px;font:700 14px 'Schibsted Grotesk';color:#fff;box-shadow:0 10px 24px rgba(255,90,78,.4)">Find my photos  →</div>
+      </div>
+    </div>
+  </div>
+  <div style="font:500 11px 'Schibsted Grotesk';color:#999;margin-top:14px;width:280px;line-height:1.45">Story-led, grouped, one action. The style description updates as you tap each chip.</div>
+</div>
+
+
+<!-- ============ PROCESSING ============ -->
+<div style="position:absolute;left:860px;top:650px;width:300px;font-family:'Schibsted Grotesk',sans-serif">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;left:4px;font:600 13px 'Schibsted Grotesk';color:#888">Processing</div>
+  <div style="position:relative;width:300px;height:650px;background:#0A0A0B;border-radius:42px;border:7px solid #000;box-shadow:0 30px 70px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;color:#FAFAFA">
+    <div style="position:absolute;top:9px;left:50%;transform:translateX(-50%);width:88px;height:25px;background:#000;border-radius:13px;z-index:30"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;justify-content:space-between;padding:14px 22px 0;font:700 12px 'Space Mono';z-index:20"><span>9:41</span><span style="display:flex;align-items:center;gap:5px">5G<span style="width:20px;height:10px;border:1.2px solid #fff;border-radius:3px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;bottom:1.5px;left:1.5px;right:5px;background:#fff;border-radius:1px"></span></span></span></div>
+
+    <div style="position:absolute;top:46px;left:0;right:0;bottom:0;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 4px">
+        <span style="font:600 12px 'Schibsted Grotesk';color:#9A9AA2">Cancel</span>
+        <span style="font:700 14px 'Schibsted Grotesk'">Curating</span>
+        <span style="width:38px"></span>
+      </div>
+
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:0 24px">
+        <!-- conic ring -->
+        <div style="position:relative;width:150px;height:150px;display:flex;align-items:center;justify-content:center">
+          <div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 90deg,#FFC65A,#FFAE3D,#FF5A4E,#FF8A45,#FFC65A,#FFC65A);-webkit-mask:radial-gradient(circle, transparent 60%, #000 61%);mask:radial-gradient(circle, transparent 60%, #000 61%);animation:spin 1.5s linear infinite"></div>
+          <div style="text-align:center"><div style="font:800 30px 'Schibsted Grotesk';letter-spacing:-0.02em">68<span style="font-size:16px">%</span></div></div>
+        </div>
+        <div style="text-align:center">
+          <div style="font:700 16px 'Schibsted Grotesk'">Reading your story</div>
+          <div style="font:500 12px 'Schibsted Grotesk';color:#7A7A82;margin-top:5px">Analyzing 247 photos from Apr 3–6</div>
+        </div>
+        <!-- steps -->
+        <div style="display:flex;flex-direction:column;gap:13px;width:210px;margin-top:4px">
+          <div style="display:flex;align-items:center;gap:11px;font:500 12px 'Schibsted Grotesk';color:#7A7A82"><span style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px">✓</span>Scanned your library</div>
+          <div style="display:flex;align-items:center;gap:11px;font:500 12px 'Schibsted Grotesk';color:#7A7A82"><span style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px">✓</span>Scored quality &amp; faces</div>
+          <div style="display:flex;align-items:center;gap:11px;font:700 12px 'Schibsted Grotesk';color:#FAFAFA;animation:pulse 1.6s ease-in-out infinite"><span style="width:18px;height:18px;border-radius:50%;border:2px solid #FF7A4D;box-sizing:border-box"></span>Matching your story</div>
+          <div style="display:flex;align-items:center;gap:11px;font:500 12px 'Schibsted Grotesk';color:#46464E"><span style="width:18px;height:18px;border-radius:50%;border:2px solid #2A2A2E;box-sizing:border-box"></span>Building the arc</div>
+        </div>
+      </div>
+
+      <!-- thumbnails appearing -->
+      <div style="display:flex;gap:7px;justify-content:center;padding:0 20px 30px">
+        <div style="width:40px;height:40px;border-radius:9px;background:linear-gradient(150deg,#E9A85C,#C25A33 55%,#6E2F2A);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)"></div>
+        <div style="width:40px;height:40px;border-radius:9px;background:linear-gradient(150deg,#5FA8C9,#2F6F8F 50%,#16314A);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)"></div>
+        <div style="width:40px;height:40px;border-radius:9px;background:linear-gradient(150deg,#7FB07E,#3E7A55 55%,#1E3A2C);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)"></div>
+        <div style="width:40px;height:40px;border-radius:9px;background:linear-gradient(150deg,#6B5BAE,#A14C84 55%,#E08A5E);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);opacity:.5"></div>
+        <div style="width:40px;height:40px;border-radius:9px;background:#161618;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);opacity:.4"></div>
+      </div>
+    </div>
+  </div>
+  <div style="font:500 11px 'Schibsted Grotesk';color:#999;margin-top:14px;width:280px;line-height:1.45">Gradient progress ring + honest, legible steps. Picks preview as they're chosen.</div>
+</div>
+
+<!-- ============ REVIEW · FILMSTRIP ============ -->
+<div style="position:absolute;left:1250px;top:650px;width:300px;font-family:'Schibsted Grotesk',sans-serif">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;left:4px;font:600 13px 'Schibsted Grotesk';color:#888">Review · filmstrip <span style="color:#c0392b">✓</span></div>
+  <div style="position:relative;width:300px;height:650px;background:#0A0A0B;border-radius:42px;border:7px solid #000;box-shadow:0 30px 70px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;color:#FAFAFA">
+    <div style="position:absolute;top:9px;left:50%;transform:translateX(-50%);width:88px;height:25px;background:#000;border-radius:13px;z-index:30"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;justify-content:space-between;padding:14px 22px 0;font:700 12px 'Space Mono';z-index:20"><span>9:41</span><span style="display:flex;align-items:center;gap:5px">5G<span style="width:20px;height:10px;border:1.2px solid #fff;border-radius:3px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;bottom:1.5px;left:1.5px;right:5px;background:#fff;border-radius:1px"></span></span></span></div>
+
+    <div style="position:absolute;top:46px;left:0;right:0;bottom:0;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 10px">
+        <span style="font-size:17px;color:#9A9AA2">✕</span>
+        <span style="font:700 14px 'Schibsted Grotesk'">Arrange the carousel</span>
+        <span style="font:700 11px 'Space Mono';color:#fff;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);padding:4px 9px;border-radius:999px">10</span>
+      </div>
+
+      <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column">
+        <!-- focused hero -->
+        <div style="position:relative;border-radius:20px;height:280px;background:linear-gradient(150deg,#E9A85C,#C25A33 55%,#6E2F2A);box-shadow:inset 0 -50px 80px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.16);overflow:hidden">
+          <span style="position:absolute;top:12px;left:12px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);color:#fff;font:800 14px 'Schibsted Grotesk';display:flex;align-items:center;justify-content:center">1</span>
+          <span style="position:absolute;top:14px;right:12px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center">⤢</span>
+          <span style="position:absolute;bottom:12px;left:12px;background:rgba(0,0,0,.5);color:#fff;font:600 10px 'Schibsted Grotesk';padding:5px 11px;border-radius:999px">🎬 The hook</span>
+        </div>
+        <div style="font:600 11px 'Schibsted Grotesk';color:#7A7A82;text-align:center;margin:13px 0 9px">Drag the strip to reorder ↓</div>
+        <!-- filmstrip -->
+        <div style="display:flex;gap:7px">
+          <div style="flex:1;height:60px;border-radius:10px;background:linear-gradient(150deg,#E9A85C,#C25A33 55%,#6E2F2A);box-shadow:0 0 0 2px #FF7A4D, inset 0 1px 0 rgba(255,255,255,.18);position:relative"><span style="position:absolute;bottom:3px;left:3px;font:700 9px 'Space Mono';color:#fff;background:rgba(0,0,0,.55);border-radius:4px;padding:1px 4px">1</span></div>
+          <div style="flex:1;height:60px;border-radius:10px;background:linear-gradient(150deg,#5FA8C9,#2F6F8F 50%,#16314A);box-shadow:inset 0 1px 0 rgba(255,255,255,.14);position:relative"><span style="position:absolute;bottom:3px;left:3px;font:700 9px 'Space Mono';color:#fff;background:rgba(0,0,0,.55);border-radius:4px;padding:1px 4px">2</span></div>
+          <div style="flex:1;height:60px;border-radius:10px;background:linear-gradient(150deg,#7FB07E,#3E7A55 55%,#1E3A2C);box-shadow:inset 0 1px 0 rgba(255,255,255,.14);position:relative"><span style="position:absolute;bottom:3px;left:3px;font:700 9px 'Space Mono';color:#fff;background:rgba(0,0,0,.55);border-radius:4px;padding:1px 4px">3</span></div>
+          <div style="flex:1;height:60px;border-radius:10px;background:linear-gradient(150deg,#6B5BAE,#A14C84 55%,#E08A5E);box-shadow:inset 0 1px 0 rgba(255,255,255,.14);position:relative"><span style="position:absolute;bottom:3px;left:3px;font:700 9px 'Space Mono';color:#fff;background:rgba(0,0,0,.55);border-radius:4px;padding:1px 4px">4</span></div>
+        </div>
+        <!-- combined more matches -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 9px">
+          <span style="font:600 10px 'Space Mono';letter-spacing:.12em;color:#7A7A82;text-transform:uppercase">More matches</span>
+          <span style="font:500 10px 'Schibsted Grotesk';color:#5E5E66">runner-ups + <span style="color:#FF5A4E">♥</span> favorites</span>
+        </div>
+        <div style="display:flex;gap:7px">
+          <div style="flex:1;height:52px;border-radius:10px;background:linear-gradient(150deg,#F0C57A,#C7824F 50%,#6E4A3C);position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,.14)"><span style="position:absolute;bottom:3px;right:3px;width:17px;height:17px;border-radius:50%;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center">＋</span></div>
+          <div style="flex:1;height:52px;border-radius:10px;background:linear-gradient(150deg,#6CC2B0,#2F8A87 55%,#1C4A4D);position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,.14)"><span style="position:absolute;top:3px;left:4px;font-size:10px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)">♥</span><span style="position:absolute;bottom:3px;right:3px;width:17px;height:17px;border-radius:50%;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center">＋</span></div>
+          <div style="flex:1;height:52px;border-radius:10px;background:linear-gradient(150deg,#E8A0A8,#C76B86 55%,#5E3B57);position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,.14)"><span style="position:absolute;bottom:3px;right:3px;width:17px;height:17px;border-radius:50%;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center">＋</span></div>
+          <div style="flex:1;height:52px;border-radius:10px;background:linear-gradient(150deg,#6B5BAE,#A14C84 55%,#E08A5E);position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,.14)"><span style="position:absolute;top:3px;left:4px;font-size:10px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)">♥</span><span style="position:absolute;bottom:3px;right:3px;width:17px;height:17px;border-radius:50%;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center">＋</span></div>
+        </div>
+      </div>
+
+      <div style="padding:12px 20px 22px;border-top:1px solid rgba(255,255,255,.07)">
+        <div style="text-align:center;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);border-radius:15px;padding:15px;font:700 14px 'Schibsted Grotesk';color:#fff;box-shadow:0 10px 24px rgba(255,90,78,.4)">Next: Caption  →</div>
+      </div>
+    </div>
+  </div>
+  <div style="font:500 11px 'Schibsted Grotesk';color:#999;margin-top:14px;width:280px;line-height:1.45">Big focused slide, tap ⤢ to expand, drag the strip to reorder. One combined matches tray.</div>
+</div>
+
+<!-- ============ CAPTION ============ -->
+<div style="position:absolute;left:80px;top:1540px;width:300px;font-family:'Schibsted Grotesk',sans-serif">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;left:4px;font:600 13px 'Schibsted Grotesk';color:#888">Caption · live preview</div>
+  <div style="position:relative;width:300px;height:650px;background:#0A0A0B;border-radius:42px;border:7px solid #000;box-shadow:0 30px 70px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;color:#FAFAFA">
+    <div style="position:absolute;top:9px;left:50%;transform:translateX(-50%);width:88px;height:25px;background:#000;border-radius:13px;z-index:30"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;justify-content:space-between;padding:14px 22px 0;font:700 12px 'Space Mono';z-index:20"><span>9:41</span><span style="display:flex;align-items:center;gap:5px">5G<span style="width:20px;height:10px;border:1.2px solid #fff;border-radius:3px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;bottom:1.5px;left:1.5px;right:5px;background:#fff;border-radius:1px"></span></span></span></div>
+
+    <div style="position:absolute;top:46px;left:0;right:0;bottom:0;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 12px">
+        <span style="font-size:22px;color:#9A9AA2">‹</span>
+        <span style="font:700 14px 'Schibsted Grotesk'">Caption</span>
+        <span style="font:700 13px 'Schibsted Grotesk';background:linear-gradient(120deg,#FFAE3D,#FF5A4E);-webkit-background-clip:text;background-clip:text;color:transparent">Next</span>
+      </div>
+
+      <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:14px">
+        <!-- live IG preview -->
+        <div style="background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:18px;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:9px;padding:10px 12px">
+            <div style="width:26px;height:26px;border-radius:50%;padding:1.5px;background:linear-gradient(135deg,#FFAE3D,#FF5A4E)"><div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(150deg,#E8A0A8,#C76B86 55%,#5E3B57);box-shadow:inset 0 0 0 1.5px #141416"></div></div>
+            <span style="font:700 12px 'Schibsted Grotesk'">your_account</span>
+            <span style="margin-left:auto;color:#7A7A82;letter-spacing:1px">···</span>
+          </div>
+          <div style="position:relative;height:200px;background:linear-gradient(150deg,#E9A85C,#C25A33 55%,#6E2F2A);box-shadow:inset 0 -40px 60px rgba(0,0,0,.35)">
+            <span style="position:absolute;top:10px;right:11px;background:rgba(0,0,0,.55);color:#fff;font:600 10px 'Space Mono';padding:3px 9px;border-radius:999px">1/10</span>
+            <div style="position:absolute;bottom:10px;left:0;right:0;display:flex;gap:4px;justify-content:center"><span style="width:5px;height:5px;border-radius:50%;background:#fff"></span><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.45)"></span><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.45)"></span><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.45)"></span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:10px 12px 6px;font-size:17px">♡ <span style="font-size:15px">▢</span> ➤ <span style="margin-left:auto;font-size:15px">⊟</span></div>
+          <div style="padding:0 12px 12px;font:400 12px 'Schibsted Grotesk';color:#D8D8DE;line-height:1.5"><b style="color:#fff">your_account</b> Tokyo taught us to slow down between bites — three days, ten plates, zero regrets…</div>
+        </div>
+
+        <!-- style chips -->
+        <div style="display:flex;gap:7px;overflow:hidden">
+          <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#fff;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);white-space:nowrap">✨ Witty</span>
+          <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#C8C8CE;border:1px solid rgba(255,255,255,.16);white-space:nowrap">Poetic</span>
+          <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#C8C8CE;border:1px solid rgba(255,255,255,.16);white-space:nowrap">Minimal</span>
+          <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#C8C8CE;border:1px solid rgba(255,255,255,.16);white-space:nowrap">Hype</span>
+        </div>
+        <!-- editor -->
+        <div style="background:#161618;border:1px solid rgba(255,255,255,.1);border-radius:15px;padding:14px;flex:1">
+          <div style="font:400 12px 'Schibsted Grotesk';color:#D8D8DE;line-height:1.6">Tokyo taught us to slow down between bites — three days, ten plates, zero regrets. <span style="color:#FF5A4E">|</span></div>
+          <div style="font:600 11px 'Schibsted Grotesk';color:#5B8DEF;margin-top:8px">#tokyo #foodie #travel #carousel</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="font:500 11px 'Schibsted Grotesk';color:#999;margin-top:14px;width:280px;line-height:1.45">Leads with the real IG post preview — you see the images and how the caption reads.</div>
+</div>
+
+<!-- ============ SHARE ============ -->
+<div style="position:absolute;left:470px;top:1540px;width:300px;font-family:'Schibsted Grotesk',sans-serif">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;left:4px;font:600 13px 'Schibsted Grotesk';color:#888">Share · consolidated</div>
+  <div style="position:relative;width:300px;height:650px;background:#0A0A0B;border-radius:42px;border:7px solid #000;box-shadow:0 30px 70px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;color:#FAFAFA">
+    <div style="position:absolute;top:9px;left:50%;transform:translateX(-50%);width:88px;height:25px;background:#000;border-radius:13px;z-index:30"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;justify-content:space-between;padding:14px 22px 0;font:700 12px 'Space Mono';z-index:20"><span>9:41</span><span style="display:flex;align-items:center;gap:5px">5G<span style="width:20px;height:10px;border:1.2px solid #fff;border-radius:3px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;bottom:1.5px;left:1.5px;right:5px;background:#fff;border-radius:1px"></span></span></span></div>
+
+    <div style="position:absolute;top:46px;left:0;right:0;bottom:0;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 14px">
+        <span style="font-size:22px;color:#9A9AA2">‹</span>
+        <span style="font:700 14px 'Schibsted Grotesk'">Ready to share</span>
+        <span style="width:16px"></span>
+      </div>
+
+      <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:16px">
+        <!-- confirm strip -->
+        <div style="display:flex;align-items:center;gap:13px;background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:13px">
+          <div style="position:relative;width:62px;height:62px;border-radius:12px;background:linear-gradient(150deg,#E9A85C,#C25A33 55%,#6E2F2A);box-shadow:inset 0 -14px 26px rgba(0,0,0,.32)"><span style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,.55);color:#fff;font:600 8px 'Space Mono';padding:1px 6px;border-radius:8px">10</span></div>
+          <div style="flex:1">
+            <div style="font:700 14px 'Schibsted Grotesk'">Tokyo, in bites</div>
+            <div style="font:500 11px 'Schibsted Grotesk';color:#7A7A82;margin-top:3px">10 photos · carousel</div>
+            <div style="font:600 10px 'Schibsted Grotesk';color:#4ED17A;margin-top:5px">✓ Caption ready</div>
+          </div>
+        </div>
+
+        <!-- actions -->
+        <div style="position:relative;border-radius:16px;padding:16px;background:linear-gradient(130deg,#FFAE3D,#FF7A45,#FF5A4E);box-shadow:0 12px 28px rgba(255,90,78,.38);display:flex;align-items:center;gap:13px">
+          <span style="font-size:22px">↗</span>
+          <div style="flex:1"><div style="font:700 14px 'Schibsted Grotesk';color:#fff">Post to Instagram</div><div style="font:500 11px 'Schibsted Grotesk';color:rgba(255,255,255,.9);margin-top:2px">Connect once · publishes the carousel</div></div>
+          <span style="font-size:18px;color:#fff">›</span>
+        </div>
+        <div style="border-radius:16px;padding:16px;background:#161618;border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:13px">
+          <span style="font-size:22px">⤓</span>
+          <div style="flex:1"><div style="font:700 14px 'Schibsted Grotesk'">Save to Pixory album</div><div style="font:500 11px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">Post later, straight from Photos</div></div>
+          <span style="font-size:18px;color:#5E5E66">›</span>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:10px;background:#141416;border-radius:13px;padding:13px;margin-top:2px">
+          <span style="font-size:14px">🔒</span>
+          <div style="font:500 10px 'Schibsted Grotesk';color:#8A8A92;line-height:1.5">Instagram login stays on-device (Secure Enclave). Nothing is sent anywhere except to Instagram.</div>
+        </div>
+        <div style="font:500 10px 'Schibsted Grotesk';color:#5E5E66;text-align:center">Caption copied to your clipboard automatically</div>
+      </div>
+    </div>
+  </div>
+  <div style="font:500 11px 'Schibsted Grotesk';color:#999;margin-top:14px;width:280px;line-height:1.45">Two repetitive previews → one confirm strip + two clearly different actions.</div>
+</div>
+
+<!-- ============ PROFILE ============ -->
+<div style="position:absolute;left:860px;top:1540px;width:300px;font-family:'Schibsted Grotesk',sans-serif">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;left:4px;font:600 13px 'Schibsted Grotesk';color:#888">Profile · new</div>
+  <div style="position:relative;width:300px;height:650px;background:#0A0A0B;border-radius:42px;border:7px solid #000;box-shadow:0 30px 70px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;color:#FAFAFA">
+    <div style="position:absolute;top:9px;left:50%;transform:translateX(-50%);width:88px;height:25px;background:#000;border-radius:13px;z-index:30"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;justify-content:space-between;padding:14px 22px 0;font:700 12px 'Space Mono';z-index:20"><span>9:41</span><span style="display:flex;align-items:center;gap:5px">5G<span style="width:20px;height:10px;border:1.2px solid #fff;border-radius:3px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;bottom:1.5px;left:1.5px;right:5px;background:#fff;border-radius:1px"></span></span></span></div>
+
+    <div style="position:absolute;top:46px;left:0;right:0;bottom:0;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 12px">
+        <span style="font:800 17px 'Schibsted Grotesk';letter-spacing:-0.02em">Profile</span>
+        <span style="font-size:17px;color:#9A9AA2">⚙</span>
+      </div>
+
+      <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:15px">
+        <!-- identity -->
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:62px;height:62px;border-radius:50%;padding:2.5px;background:linear-gradient(135deg,#FFC65A,#FFAE3D,#FF7A4D,#FF5A4E)"><div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(150deg,#E8A0A8,#C76B86 55%,#5E3B57);box-shadow:inset 0 0 0 2.5px #0A0A0B"></div></div>
+          <div style="flex:1">
+            <div style="font:800 17px 'Schibsted Grotesk';letter-spacing:-0.01em">Mia Park</div>
+            <div style="font:500 12px 'Schibsted Grotesk';color:#7A7A82">@mia.park</div>
+            <span style="display:inline-block;margin-top:6px;font:600 9px 'Space Mono';letter-spacing:.06em;color:#fff;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);padding:4px 9px;border-radius:999px">AESTHETE</span>
+          </div>
+        </div>
+        <!-- stats -->
+        <div style="display:flex;background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden">
+          <div style="flex:1;text-align:center;padding:13px 4px"><div style="font:800 18px 'Schibsted Grotesk'">12</div><div style="font:500 9px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">Stories</div></div>
+          <div style="width:1px;background:rgba(255,255,255,.08)"></div>
+          <div style="flex:1;text-align:center;padding:13px 4px"><div style="font:800 18px 'Schibsted Grotesk'">8</div><div style="font:500 9px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">Published</div></div>
+          <div style="width:1px;background:rgba(255,255,255,.08)"></div>
+          <div style="flex:1;text-align:center;padding:13px 4px"><div style="font:800 18px 'Schibsted Grotesk'">5</div><div style="font:500 9px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">Saved</div></div>
+        </div>
+        <!-- tabs -->
+        <div style="display:flex;gap:22px;border-bottom:1px solid rgba(255,255,255,.08)">
+          <span style="font:700 12px 'Schibsted Grotesk';padding-bottom:9px;border-bottom:2px solid #FF7A4D;margin-bottom:-1px">Stories</span>
+          <span style="font:600 12px 'Schibsted Grotesk';color:#5E5E66;padding-bottom:9px">Saved</span>
+          <span style="font:600 12px 'Schibsted Grotesk';color:#5E5E66;padding-bottom:9px">Settings</span>
+        </div>
+        <!-- grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+          <div style="position:relative;aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#E9A85C,#C25A33 55%,#6E2F2A);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)"><span style="position:absolute;top:4px;right:4px;color:#fff;font-size:10px;text-shadow:0 1px 2px rgba(0,0,0,.6)">⊟</span></div>
+          <div style="aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#5FA8C9,#2F6F8F 50%,#16314A);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)"></div>
+          <div style="position:relative;aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#6B5BAE,#A14C84 55%,#E08A5E);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)"><span style="position:absolute;top:4px;right:4px;color:#fff;font-size:10px;text-shadow:0 1px 2px rgba(0,0,0,.6)">⊟</span></div>
+          <div style="aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#7FB07E,#3E7A55 55%,#1E3A2C);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)"></div>
+          <div style="aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#E8A0A8,#C76B86 55%,#5E3B57);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)"></div>
+          <div style="position:relative;aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#6CC2B0,#2F8A87 55%,#1C4A4D);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)"><span style="position:absolute;top:4px;right:4px;color:#fff;font-size:10px;text-shadow:0 1px 2px rgba(0,0,0,.6)">⊟</span></div>
+        </div>
+      </div>
+
+      <!-- tab bar -->
+      <div style="display:flex;align-items:center;justify-content:space-around;padding:12px 24px 22px;border-top:1px solid rgba(255,255,255,.07)">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#5E5E66"><span style="font-size:18px">⌂</span><span style="font:600 9px 'Schibsted Grotesk'">Home</span></div>
+        <div style="width:46px;height:46px;border-radius:16px;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;box-shadow:0 8px 20px rgba(255,90,78,.45);margin-top:-8px">＋</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:18px">◔</span><span style="font:700 9px 'Schibsted Grotesk'">Profile</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="font:500 11px 'Schibsted Grotesk';color:#999;margin-top:14px;width:280px;line-height:1.45">New screen: a home for past stories, drafts, default style, connected accounts &amp; face filter.</div>
+</div>
+
+<!-- ============ FACE SETUP ============ -->
+<div style="position:absolute;left:1250px;top:1540px;width:300px;font-family:'Schibsted Grotesk',sans-serif">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;left:4px;font:600 13px 'Schibsted Grotesk';color:#888">Face setup · in Settings</div>
+  <div style="position:relative;width:300px;height:650px;background:#0A0A0B;border-radius:42px;border:7px solid #000;box-shadow:0 30px 70px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;color:#FAFAFA">
+    <div style="position:absolute;top:9px;left:50%;transform:translateX(-50%);width:88px;height:25px;background:#000;border-radius:13px;z-index:30"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;justify-content:space-between;padding:14px 22px 0;font:700 12px 'Space Mono';z-index:20"><span>9:41</span><span style="display:flex;align-items:center;gap:5px">5G<span style="width:20px;height:10px;border:1.2px solid #fff;border-radius:3px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;bottom:1.5px;left:1.5px;right:5px;background:#fff;border-radius:1px"></span></span></span></div>
+
+    <div style="position:absolute;top:46px;left:0;right:0;bottom:0;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 4px">
+        <span style="font-size:22px;color:#9A9AA2">‹</span>
+        <span style="font:700 14px 'Schibsted Grotesk'">Your face</span>
+        <span style="width:16px"></span>
+      </div>
+
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:0 28px">
+        <div style="width:150px;height:150px;border-radius:50%;padding:4px;background:linear-gradient(135deg,#FFC65A,#FFAE3D,#FF7A45,#FF5A4E,#FF8A45)">
+          <div style="width:100%;height:100%;border-radius:50%;background:#161618;display:flex;align-items:center;justify-content:center;font-size:46px;color:#46464E;box-shadow:inset 0 0 0 2px #0A0A0B">☺</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font:800 19px 'Schibsted Grotesk';letter-spacing:-0.01em">Pick a photo of you</div>
+          <div style="font:500 12px 'Schibsted Grotesk';color:#9A9AA2;margin-top:8px;line-height:1.55">Pixory learns your face once, then keeps the photos that are actually <i>you</i> — and drops the randoms. Landscapes always stay.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:11px 14px;font:500 10px 'Schibsted Grotesk';color:#8A8A92">🔒 Stays on this device. Never uploaded.</div>
+      </div>
+
+      <div style="padding:14px 20px 24px;display:flex;flex-direction:column;gap:10px">
+        <div style="text-align:center;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);border-radius:15px;padding:15px;font:700 14px 'Schibsted Grotesk';color:#fff;box-shadow:0 10px 24px rgba(255,90,78,.4)">Choose a selfie</div>
+        <div style="text-align:center;font:600 12px 'Schibsted Grotesk';color:#7A7A82;padding:4px">Skip for now</div>
+      </div>
+    </div>
+  </div>
+  <div style="font:500 11px 'Schibsted Grotesk';color:#999;margin-top:14px;width:280px;line-height:1.45">One-time identity set-up, on-device. Lives in Settings rather than the create form.</div>
+</div>
+
+<!-- closing note -->
+<div style="position:absolute;left:80px;top:2280px;width:560px;font-family:'Schibsted Grotesk',sans-serif">
+  <div style="background:#0B0B0D;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px 24px;color:#FAFAFA">
+    <div style="font:800 17px 'Schibsted Grotesk';letter-spacing:-0.01em;margin-bottom:6px">Where this can go next</div>
+    <div style="font:500 13px 'Schibsted Grotesk';color:#A8A8AE;line-height:1.6">These eight screens cover the full flow on the dark system. I can drop in your real sample photos (replacing the gradient stand-ins), add a soft-charcoal theme variant to compare against this OLED black, or turn any screen into a clickable prototype. Just say the word.</div>
+  </div>
+</div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFAE3D"/><stop offset=".5" stop-color="#FF7A4D"/><stop offset="1" stop-color="#FF5A4E"/></linearGradient></defs><rect width="100" height="100" rx="22" fill="#0A0A0B"/><rect x="30" y="30" width="40" height="40" rx="12" fill="url(#pg)"/><text x="50" y="58" font-family="sans-serif" font-size="24" font-weight="800" fill="#fff" text-anchor="middle">P</text></svg>
+</template>
+</x-dc>
+</body>
+</html>

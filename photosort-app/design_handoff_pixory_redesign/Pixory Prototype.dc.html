@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#202023}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px 0;font-family:'Schibsted Grotesk',sans-serif">
+  <div style="font:600 12px 'Space Mono';letter-spacing:.1em;color:#8A8A92;text-transform:uppercase">Pixory · tap through the flow</div>
+
+  <!-- PHONE -->
+  <div style="position:relative;width:324px;height:702px;background:#0A0A0B;border-radius:44px;border:8px solid #000;box-shadow:0 40px 90px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;color:#FAFAFA">
+    <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:92px;height:27px;background:#000;border-radius:14px;z-index:40"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;justify-content:space-between;padding:15px 24px 0;font:700 12px 'Space Mono';z-index:30"><span>9:41</span><span style="display:flex;align-items:center;gap:5px">5G<span style="width:20px;height:10px;border:1.2px solid #fff;border-radius:3px;position:relative;display:inline-block"><span style="position:absolute;top:1.5px;bottom:1.5px;left:1.5px;right:5px;background:#fff;border-radius:1px"></span></span></span></div>
+
+    <div style="position:absolute;top:46px;left:0;right:0;bottom:0">
+
+      <!-- ============ HOME ============ -->
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+      <div style="height:100%;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 14px">
+          <div style="font:800 24px 'Schibsted Grotesk';letter-spacing:-0.02em;background:linear-gradient(120deg,#FFC65A,#FFAE3D,#FF5A4E);-webkit-background-clip:text;background-clip:text;color:transparent">Pixory</div>
+          <div onClick="{{ goProfile }}" style="width:34px;height:34px;border-radius:50%;padding:2px;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);cursor:pointer"><div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(150deg,#E8A0A8,#C76B86 55%,#5E3B57);box-shadow:inset 0 0 0 2px #0A0A0B"></div></div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:15px">
+          <div onClick="{{ goStory }}" style="position:relative;border-radius:22px;padding:20px;background:linear-gradient(130deg,#FFAE3D,#FF7A45,#FF5A4E);overflow:hidden;cursor:pointer">
+            <div style="position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.16)"></div>
+            <div style="position:relative">
+              <div style="font:800 19px 'Schibsted Grotesk';color:#fff">Create a new story</div>
+              <div style="font:500 12px 'Schibsted Grotesk';color:rgba(255,255,255,.92);margin-top:5px;width:175px;line-height:1.45">Dates, a place &amp; a vibe → your 10 best, sequenced.</div>
+              <div style="display:inline-flex;align-items:center;gap:7px;margin-top:14px;background:#fff;color:#B23A22;border-radius:999px;padding:9px 15px;font:700 12px 'Schibsted Grotesk'">＋ Start →</div>
+            </div>
+          </div>
+          <div style="font:600 10px 'Space Mono';letter-spacing:.14em;color:#7A7A82;text-transform:uppercase">Your stories</div>
+          <div onClick="{{ tapPublished }}" style="display:flex;align-items:center;gap:13px;cursor:pointer">
+            <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(150deg,#E9A85C,#C25A33 55%,#6E2F2A);box-shadow:inset 0 -14px 24px rgba(0,0,0,.3)"></div>
+            <div style="flex:1"><div style="font:700 14px 'Schibsted Grotesk'">Tokyo, in bites</div><div style="font:500 11px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">Apr 3 · 10 photos</div></div>
+            <span style="font:600 8px 'Space Mono';color:#4ED17A;background:rgba(78,209,122,.12);padding:5px 8px;border-radius:999px">PUBLISHED</span>
+          </div>
+          <div onClick="{{ tapPublished }}" style="display:flex;align-items:center;gap:13px;cursor:pointer">
+            <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(150deg,#5FA8C9,#2F6F8F 50%,#16314A);box-shadow:inset 0 -14px 24px rgba(0,0,0,.3)"></div>
+            <div style="flex:1"><div style="font:700 14px 'Schibsted Grotesk'">Amalfi slow days</div><div style="font:500 11px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">Mar 19 · 10 photos</div></div>
+            <span style="font:600 8px 'Space Mono';color:#4ED17A;background:rgba(78,209,122,.12);padding:5px 8px;border-radius:999px">PUBLISHED</span>
+          </div>
+          <div onClick="{{ tapDraft }}" style="display:flex;align-items:center;gap:13px;cursor:pointer">
+            <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(150deg,#6B5BAE,#A14C84 55%,#E08A5E);box-shadow:inset 0 -14px 24px rgba(0,0,0,.3)"></div>
+            <div style="flex:1"><div style="font:700 14px 'Schibsted Grotesk'">Weekend upstate</div><div style="font:500 11px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">Feb 28 · 7 selected</div></div>
+            <span style="font:600 8px 'Space Mono';color:#FFAE3D;background:rgba(255,174,61,.13);padding:5px 8px;border-radius:999px">DRAFT</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-around;padding:12px 24px 22px;border-top:1px solid rgba(255,255,255,.07)">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:18px">⌂</span><span style="font:700 9px 'Schibsted Grotesk';background:linear-gradient(120deg,#FFAE3D,#FF5A4E);-webkit-background-clip:text;background-clip:text;color:transparent">Home</span></div>
+          <div onClick="{{ goStory }}" style="width:46px;height:46px;border-radius:16px;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;box-shadow:0 8px 20px rgba(255,90,78,.45);margin-top:-8px;cursor:pointer">＋</div>
+          <div onClick="{{ goProfile }}" style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#5E5E66;cursor:pointer"><span style="font-size:18px">◔</span><span style="font:600 9px 'Schibsted Grotesk'">Profile</span></div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ============ NEW STORY ============ -->
+      <sc-if value="{{ isStory }}">
+      <div style="height:100%;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 12px">
+          <span onClick="{{ back }}" style="font-size:22px;color:#9A9AA2;cursor:pointer">‹</span>
+          <span style="font:700 14px 'Schibsted Grotesk'">New Story</span><span style="width:16px"></span>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:15px">
+          <div>
+            <div style="font:600 10px 'Space Mono';letter-spacing:.14em;color:#7A7A82;text-transform:uppercase;margin-bottom:9px">What's the story?</div>
+            <div style="background:#161618;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:15px;min-height:64px"><div style="font:500 14px 'Schibsted Grotesk';line-height:1.5">Three days eating through Tokyo<span style="color:#FF5A4E">|</span></div></div>
+          </div>
+          <div style="display:flex;gap:11px">
+            <div style="flex:1;background:#161618;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 13px"><div style="font:600 9px 'Space Mono';letter-spacing:.1em;color:#7A7A82;text-transform:uppercase">📅 Dates</div><div style="font:700 13px 'Schibsted Grotesk';margin-top:5px">Apr 3 – 6</div></div>
+            <div style="flex:1;background:#161618;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 13px"><div style="font:600 9px 'Space Mono';letter-spacing:.1em;color:#7A7A82;text-transform:uppercase">📍 Place</div><div style="font:600 13px 'Schibsted Grotesk';color:#5E5E66;margin-top:5px">Optional</div></div>
+          </div>
+          <div>
+            <div style="font:600 10px 'Space Mono';letter-spacing:.14em;color:#7A7A82;text-transform:uppercase;margin-bottom:9px">Your posting style</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#fff;background:linear-gradient(135deg,#FFAE3D,#FF5A4E)">Aesthete</span>
+              <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#C8C8CE;border:1px solid rgba(255,255,255,.16)">Social</span>
+              <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#C8C8CE;border:1px solid rgba(255,255,255,.16)">Logger</span>
+              <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#C8C8CE;border:1px solid rgba(255,255,255,.16)">Mood</span>
+            </div>
+            <div style="display:flex;gap:9px;background:rgba(255,90,78,.08);border:1px solid rgba(255,90,78,.18);border-radius:13px;padding:12px;margin-top:11px">
+              <span style="font-size:13px">✦</span>
+              <div style="font:500 11px 'Schibsted Grotesk';color:#C8C8CE;line-height:1.5"><b style="color:#fff">The Aesthete</b> keeps a consistent grid — palette over chaos.</div>
+            </div>
+          </div>
+          <div onClick="{{ faceRowTap }}" style="display:flex;align-items:center;gap:11px;background:#161618;border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:12px 13px;cursor:pointer">
+            <span style="font-size:16px">☺</span>
+            <div style="flex:1">
+              <div style="font:700 12px 'Schibsted Grotesk'">My-face filter</div>
+              <sc-if value="{{ faceSet }}"><div style="font:500 10px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">On · keeping only photos that are you</div></sc-if>
+              <sc-if value="{{ noFace }}"><div style="font:500 10px 'Schibsted Grotesk';color:#FF8A5A;margin-top:2px">Add a selfie to turn this on →</div></sc-if>
+            </div>
+            <sc-if value="{{ faceSet }}"><span style="width:38px;height:22px;border-radius:999px;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);position:relative;display:inline-block;flex-shrink:0"><span style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:#fff"></span></span></sc-if>
+            <sc-if value="{{ noFace }}"><span style="width:38px;height:22px;border-radius:999px;background:#2A2A2E;position:relative;display:inline-block;flex-shrink:0"><span style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff"></span></span></sc-if>
+          </div>
+        </div>
+        <div style="padding:12px 20px 22px;border-top:1px solid rgba(255,255,255,.07)">
+          <div onClick="{{ goProc }}" style="text-align:center;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);border-radius:15px;padding:15px;font:700 14px 'Schibsted Grotesk';color:#fff;box-shadow:0 10px 24px rgba(255,90,78,.4);cursor:pointer">Find my photos →</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ============ PROCESSING ============ -->
+      <sc-if value="{{ isProc }}">
+      <div style="height:100%;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 4px">
+          <span onClick="{{ goHome }}" style="font:600 12px 'Schibsted Grotesk';color:#9A9AA2;cursor:pointer">Cancel</span>
+          <span style="font:700 14px 'Schibsted Grotesk'">Curating</span><span style="width:38px"></span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:0 24px">
+          <div style="position:relative;width:150px;height:150px;display:flex;align-items:center;justify-content:center">
+            <div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 90deg,#FFC65A,#FFAE3D,#FF5A4E,#FF8A45,#FFC65A);-webkit-mask:radial-gradient(circle, transparent 60%, #000 61%);mask:radial-gradient(circle, transparent 60%, #000 61%);animation:spin 1.5s linear infinite"></div>
+            <div style="font:800 30px 'Schibsted Grotesk';letter-spacing:-0.02em">68<span style="font-size:16px">%</span></div>
+          </div>
+          <div style="text-align:center"><div style="font:700 16px 'Schibsted Grotesk'">Reading your story</div><div style="font:500 12px 'Schibsted Grotesk';color:#7A7A82;margin-top:5px">Analyzing 247 photos · this is a demo</div></div>
+          <div style="display:flex;flex-direction:column;gap:13px;width:210px">
+            <div style="display:flex;align-items:center;gap:11px;font:500 12px 'Schibsted Grotesk';color:#7A7A82"><span style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px">✓</span>Scanned your library</div>
+            <div style="display:flex;align-items:center;gap:11px;font:700 12px 'Schibsted Grotesk';animation:pulse 1.6s ease-in-out infinite"><span style="width:18px;height:18px;border-radius:50%;border:2px solid #FF5A4E;box-sizing:border-box"></span>Matching your story</div>
+            <div style="display:flex;align-items:center;gap:11px;font:500 12px 'Schibsted Grotesk';color:#46464E"><span style="width:18px;height:18px;border-radius:50%;border:2px solid #2A2A2E;box-sizing:border-box"></span>Building the arc</div>
+          </div>
+          <div style="font:500 10px 'Schibsted Grotesk';color:#5E5E66">auto-advances in a moment…</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ============ REVIEW (filmstrip) ============ -->
+      <sc-if value="{{ isReview }}">
+      <div style="height:100%;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 10px">
+          <span onClick="{{ goHome }}" style="font-size:17px;color:#9A9AA2;cursor:pointer">✕</span>
+          <span style="font:700 14px 'Schibsted Grotesk'">Arrange the carousel</span>
+          <span style="font:700 11px 'Space Mono';color:#fff;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);padding:4px 9px;border-radius:999px">10</span>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column">
+          <div style="position:relative;border-radius:20px;height:250px;background:linear-gradient(150deg,#E9A85C,#C25A33 55%,#6E2F2A);box-shadow:inset 0 -50px 80px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.16);overflow:hidden">
+            <span style="position:absolute;top:12px;left:12px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);color:#fff;font:800 14px 'Schibsted Grotesk';display:flex;align-items:center;justify-content:center">1</span>
+            <span style="position:absolute;top:14px;right:12px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center">⤢</span>
+            <span style="position:absolute;bottom:12px;left:12px;background:rgba(0,0,0,.5);color:#fff;font:600 10px 'Schibsted Grotesk';padding:5px 11px;border-radius:999px">🎬 The hook</span>
+          </div>
+          <div style="font:600 11px 'Schibsted Grotesk';color:#7A7A82;text-align:center;margin:12px 0 9px">Drag the strip to reorder ↓</div>
+          <div style="display:flex;gap:7px">
+            <div style="flex:1;height:58px;border-radius:10px;background:linear-gradient(150deg,#E9A85C,#C25A33 55%,#6E2F2A);box-shadow:0 0 0 2px #FF7A4D"></div>
+            <div style="flex:1;height:58px;border-radius:10px;background:linear-gradient(150deg,#5FA8C9,#2F6F8F 50%,#16314A)"></div>
+            <div style="flex:1;height:58px;border-radius:10px;background:linear-gradient(150deg,#7FB07E,#3E7A55 55%,#1E3A2C)"></div>
+            <div style="flex:1;height:58px;border-radius:10px;background:linear-gradient(150deg,#6B5BAE,#A14C84 55%,#E08A5E)"></div>
+          </div>
+          <div style="font:600 10px 'Space Mono';letter-spacing:.12em;color:#7A7A82;text-transform:uppercase;margin:16px 0 8px">More matches</div>
+          <div style="display:flex;gap:7px">
+            <div style="flex:1;height:50px;border-radius:10px;background:linear-gradient(150deg,#F0C57A,#C7824F 50%,#6E4A3C);position:relative"><span style="position:absolute;bottom:3px;right:3px;width:17px;height:17px;border-radius:50%;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center">＋</span></div>
+            <div style="flex:1;height:50px;border-radius:10px;background:linear-gradient(150deg,#6CC2B0,#2F8A87 55%,#1C4A4D);position:relative"><span style="position:absolute;top:3px;left:4px;font-size:10px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)">♥</span><span style="position:absolute;bottom:3px;right:3px;width:17px;height:17px;border-radius:50%;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center">＋</span></div>
+            <div style="flex:1;height:50px;border-radius:10px;background:linear-gradient(150deg,#E8A0A8,#C76B86 55%,#5E3B57);position:relative"><span style="position:absolute;bottom:3px;right:3px;width:17px;height:17px;border-radius:50%;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center">＋</span></div>
+          </div>
+        </div>
+        <div style="padding:12px 20px 22px;border-top:1px solid rgba(255,255,255,.07)">
+          <div onClick="{{ goCaption }}" style="text-align:center;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);border-radius:15px;padding:15px;font:700 14px 'Schibsted Grotesk';color:#fff;box-shadow:0 10px 24px rgba(255,90,78,.4);cursor:pointer">Next: Caption →</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ============ CAPTION ============ -->
+      <sc-if value="{{ isCaption }}">
+      <div style="height:100%;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 12px">
+          <span onClick="{{ back }}" style="font-size:22px;color:#9A9AA2;cursor:pointer">‹</span>
+          <span style="font:700 14px 'Schibsted Grotesk'">Caption</span>
+          <span onClick="{{ goShare }}" style="font:700 13px 'Schibsted Grotesk';background:linear-gradient(120deg,#FFAE3D,#FF5A4E);-webkit-background-clip:text;background-clip:text;color:transparent;cursor:pointer">Next</span>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:14px">
+          <div style="background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:18px;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:9px;padding:10px 12px">
+              <div style="width:26px;height:26px;border-radius:50%;padding:1.5px;background:linear-gradient(135deg,#FFAE3D,#FF5A4E)"><div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(150deg,#E8A0A8,#C76B86 55%,#5E3B57);box-shadow:inset 0 0 0 1.5px #141416"></div></div>
+              <span style="font:700 12px 'Schibsted Grotesk'">your_account</span><span style="margin-left:auto;color:#7A7A82;letter-spacing:1px">···</span>
+            </div>
+            <div style="position:relative;height:188px;background:linear-gradient(150deg,#E9A85C,#C25A33 55%,#6E2F2A);box-shadow:inset 0 -40px 60px rgba(0,0,0,.35)">
+              <span style="position:absolute;top:10px;right:11px;background:rgba(0,0,0,.55);color:#fff;font:600 10px 'Space Mono';padding:3px 9px;border-radius:999px">1/10</span>
+              <div style="position:absolute;bottom:10px;left:0;right:0;display:flex;gap:4px;justify-content:center"><span style="width:5px;height:5px;border-radius:50%;background:#fff"></span><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.45)"></span><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.45)"></span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;padding:10px 12px 6px;font-size:17px">♡ <span style="font-size:15px">▢</span> ➤ <span style="margin-left:auto;font-size:15px">⊟</span></div>
+            <div style="padding:0 12px 12px;font:400 12px 'Schibsted Grotesk';color:#D8D8DE;line-height:1.5"><b style="color:#fff">your_account</b> Tokyo taught us to slow down between bites…</div>
+          </div>
+          <div style="display:flex;gap:7px;overflow:hidden">
+            <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#fff;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);white-space:nowrap">✨ Witty</span>
+            <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#C8C8CE;border:1px solid rgba(255,255,255,.16);white-space:nowrap">Poetic</span>
+            <span style="padding:8px 13px;border-radius:999px;font:600 11px 'Schibsted Grotesk';color:#C8C8CE;border:1px solid rgba(255,255,255,.16);white-space:nowrap">Minimal</span>
+          </div>
+          <div style="background:#161618;border:1px solid rgba(255,255,255,.1);border-radius:15px;padding:14px;flex:1">
+            <div style="font:400 12px 'Schibsted Grotesk';color:#D8D8DE;line-height:1.6">Tokyo taught us to slow down between bites — three days, ten plates, zero regrets. <span style="color:#FF5A4E">|</span></div>
+            <div style="font:600 11px 'Schibsted Grotesk';color:#5B8DEF;margin-top:8px">#tokyo #foodie #travel</div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ============ SHARE ============ -->
+      <sc-if value="{{ isShare }}">
+      <div style="height:100%;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 14px">
+          <span onClick="{{ back }}" style="font-size:22px;color:#9A9AA2;cursor:pointer">‹</span>
+          <span style="font:700 14px 'Schibsted Grotesk'">Ready to share</span><span style="width:16px"></span>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:center;gap:13px;background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:13px">
+            <div style="position:relative;width:62px;height:62px;border-radius:12px;background:linear-gradient(150deg,#E9A85C,#C25A33 55%,#6E2F2A);box-shadow:inset 0 -14px 26px rgba(0,0,0,.32)"><span style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,.55);color:#fff;font:600 8px 'Space Mono';padding:1px 6px;border-radius:8px">10</span></div>
+            <div style="flex:1"><div style="font:700 14px 'Schibsted Grotesk'">Tokyo, in bites</div><div style="font:500 11px 'Schibsted Grotesk';color:#7A7A82;margin-top:3px">10 photos · carousel</div><div style="font:600 10px 'Schibsted Grotesk';color:#4ED17A;margin-top:5px">✓ Caption ready</div></div>
+          </div>
+          <div onClick="{{ postIG }}" style="position:relative;border-radius:16px;padding:16px;background:linear-gradient(130deg,#FFAE3D,#FF7A45,#FF5A4E);box-shadow:0 12px 28px rgba(255,90,78,.4);display:flex;align-items:center;gap:13px;cursor:pointer">
+            <span style="font-size:22px">↗</span>
+            <div style="flex:1"><div style="font:700 14px 'Schibsted Grotesk';color:#fff">Post to Instagram</div><div style="font:500 11px 'Schibsted Grotesk';color:rgba(255,255,255,.9);margin-top:2px">Connect once · publishes the carousel</div></div>
+            <span style="font-size:18px;color:#fff">›</span>
+          </div>
+          <div onClick="{{ saveAlbum }}" style="border-radius:16px;padding:16px;background:#161618;border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:13px;cursor:pointer">
+            <span style="font-size:22px">⤓</span>
+            <div style="flex:1"><div style="font:700 14px 'Schibsted Grotesk'">Save to Pixory album</div><div style="font:500 11px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">Post later, straight from Photos</div></div>
+            <span style="font-size:18px;color:#5E5E66">›</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;background:#141416;border-radius:13px;padding:13px"><span style="font-size:14px">🔒</span><div style="font:500 10px 'Schibsted Grotesk';color:#8A8A92;line-height:1.5">Instagram login stays on-device. Nothing is sent anywhere except to Instagram.</div></div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ============ INSTAGRAM CONNECT ============ -->
+      <sc-if value="{{ isIG }}">
+      <div style="height:100%;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 14px">
+          <span onClick="{{ back }}" style="font-size:22px;color:#9A9AA2;cursor:pointer">‹</span>
+          <span style="font:700 14px 'Schibsted Grotesk'">Connect Instagram</span><span style="width:16px"></span>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:6px">
+            <div style="width:62px;height:62px;border-radius:18px;background:linear-gradient(135deg,#FEDA75,#FA7E1E,#D62976,#962FBF,#4F5BD5);display:flex;align-items:center;justify-content:center;font-size:30px">📷</div>
+            <div style="font:800 17px 'Schibsted Grotesk';letter-spacing:-0.01em">Link your account</div>
+            <div style="font:500 11px 'Schibsted Grotesk';color:#9A9AA2;text-align:center;width:230px;line-height:1.5">So Pixory can publish the carousel for you. You only do this once.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+            <div style="background:#161618;border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:14px;display:flex;align-items:center;gap:10px"><span style="color:#5E5E66;font-size:14px">@</span><span style="font:500 13px 'Schibsted Grotesk';color:#5E5E66">Instagram username</span></div>
+            <div style="background:#161618;border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:14px;display:flex;align-items:center;gap:10px;justify-content:space-between"><span style="font:500 13px 'Schibsted Grotesk';color:#5E5E66">Password</span><span style="color:#5E5E66;font-size:13px">👁</span></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;background:#141416;border-radius:12px;padding:12px"><span style="font-size:14px">🔒</span><div style="font:500 10px 'Schibsted Grotesk';color:#8A8A92;line-height:1.5">Stored only on this device in the iOS Secure Enclave — sent directly to Instagram, never to Pixory's servers.</div></div>
+          <div style="margin-top:auto;padding-bottom:22px">
+            <div onClick="{{ connectIG }}" style="text-align:center;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);border-radius:15px;padding:15px;font:700 14px 'Schibsted Grotesk';color:#fff;box-shadow:0 10px 24px rgba(255,90,78,.4);cursor:pointer">Connect &amp; publish</div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ============ PROFILE ============ -->
+      <sc-if value="{{ isProfile }}">
+      <div style="height:100%;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 12px">
+          <span style="font:800 17px 'Schibsted Grotesk';letter-spacing:-0.02em">Profile</span>
+          <span onClick="{{ tabSettings }}" style="font-size:17px;color:#9A9AA2;cursor:pointer">⚙</span>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:60px;height:60px;border-radius:50%;padding:2.5px;background:linear-gradient(135deg,#FFC65A,#FFAE3D,#FF5A4E)"><div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(150deg,#E8A0A8,#C76B86 55%,#5E3B57);box-shadow:inset 0 0 0 2.5px #0A0A0B"></div></div>
+            <div style="flex:1"><div style="font:800 17px 'Schibsted Grotesk';letter-spacing:-0.01em">Mia Park</div><div style="font:500 12px 'Schibsted Grotesk';color:#7A7A82">@mia.park</div></div>
+          </div>
+          <div style="display:flex;background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden">
+            <div style="flex:1;text-align:center;padding:12px 4px"><div style="font:800 17px 'Schibsted Grotesk'">12</div><div style="font:500 9px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">Stories</div></div>
+            <div style="width:1px;background:rgba(255,255,255,.08)"></div>
+            <div style="flex:1;text-align:center;padding:12px 4px"><div style="font:800 17px 'Schibsted Grotesk'">8</div><div style="font:500 9px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">Published</div></div>
+            <div style="width:1px;background:rgba(255,255,255,.08)"></div>
+            <div style="flex:1;text-align:center;padding:12px 4px"><div style="font:800 17px 'Schibsted Grotesk'">5</div><div style="font:500 9px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">Saved</div></div>
+          </div>
+          <div style="display:flex;gap:22px;border-bottom:1px solid rgba(255,255,255,.08)">
+            <span onClick="{{ tabStories }}" style="font:700 12px 'Schibsted Grotesk';padding-bottom:9px;cursor:pointer">Stories</span>
+            <span onClick="{{ tabSaved }}" style="font:600 12px 'Schibsted Grotesk';color:#5E5E66;padding-bottom:9px;cursor:pointer">Saved</span>
+            <span onClick="{{ tabSettings }}" style="font:600 12px 'Schibsted Grotesk';color:#5E5E66;padding-bottom:9px;cursor:pointer">Settings</span>
+          </div>
+
+          <sc-if value="{{ isTabSettings }}">
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <div onClick="{{ goIG }}" style="display:flex;align-items:center;gap:12px;background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:13px;padding:13px;cursor:pointer">
+              <span style="font-size:18px">📷</span><div style="flex:1"><div style="font:700 12px 'Schibsted Grotesk'">Instagram account</div><div style="font:500 10px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">Not connected — tap to link</div></div><span style="color:#5E5E66">›</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:13px;padding:13px">
+              <span style="font-size:18px">☺</span><div style="flex:1"><div style="font:700 12px 'Schibsted Grotesk'">My-face filter</div><div style="font:500 10px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">Keeps photos that are you</div></div>
+              <span style="width:38px;height:22px;border-radius:999px;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);position:relative;display:inline-block"><span style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:#fff"></span></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:13px;padding:13px">
+              <span style="font-size:18px">✦</span><div style="flex:1"><div style="font:700 12px 'Schibsted Grotesk'">Default posting style</div><div style="font:500 10px 'Schibsted Grotesk';color:#7A7A82;margin-top:2px">The Aesthete</div></div><span style="color:#5E5E66">›</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:13px;padding:13px">
+              <span style="font-size:18px">🔔</span><div style="flex:1"><div style="font:700 12px 'Schibsted Grotesk'">Notifications</div></div>
+              <span style="width:38px;height:22px;border-radius:999px;background:#2A2A2E;position:relative;display:inline-block"><span style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff"></span></span>
+            </div>
+            <div style="text-align:center;font:600 11px 'Schibsted Grotesk';color:#FF6B5A;padding:10px">Sign out</div>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ isTabStories }}">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+            <div style="aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#E9A85C,#C25A33 55%,#6E2F2A)"></div>
+            <div style="aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#5FA8C9,#2F6F8F 50%,#16314A)"></div>
+            <div style="aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#6B5BAE,#A14C84 55%,#E08A5E)"></div>
+            <div style="aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#7FB07E,#3E7A55 55%,#1E3A2C)"></div>
+            <div style="aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#E8A0A8,#C76B86 55%,#5E3B57)"></div>
+            <div style="aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#6CC2B0,#2F8A87 55%,#1C4A4D)"></div>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ isTabSaved }}">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+            <div style="aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#F0C57A,#C7824F 50%,#6E4A3C)"></div>
+            <div style="aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#6B5BAE,#A14C84 55%,#E08A5E)"></div>
+            <div style="aspect-ratio:1;border-radius:9px;background:linear-gradient(150deg,#5FA8C9,#2F6F8F 50%,#16314A)"></div>
+          </div>
+          </sc-if>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-around;padding:12px 24px 22px;border-top:1px solid rgba(255,255,255,.07)">
+          <div onClick="{{ goHome }}" style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#5E5E66;cursor:pointer"><span style="font-size:18px">⌂</span><span style="font:600 9px 'Schibsted Grotesk'">Home</span></div>
+          <div onClick="{{ goStory }}" style="width:46px;height:46px;border-radius:16px;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;box-shadow:0 8px 20px rgba(255,90,78,.45);margin-top:-8px;cursor:pointer">＋</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:18px">◔</span><span style="font:700 9px 'Schibsted Grotesk';background:linear-gradient(120deg,#FFAE3D,#FF5A4E);-webkit-background-clip:text;background-clip:text;color:transparent">Profile</span></div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ============ STORY DETAIL (published) ============ -->
+      <sc-if value="{{ isDetail }}">
+      <div style="height:100%;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 12px">
+          <span onClick="{{ goHome }}" style="font-size:22px;color:#9A9AA2;cursor:pointer">‹</span>
+          <span style="font:700 14px 'Schibsted Grotesk'">Tokyo, in bites</span><span style="color:#7A7A82;letter-spacing:1px">···</span>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:14px">
+          <div style="position:relative;border-radius:18px;height:230px;background:linear-gradient(150deg,#E9A85C,#C25A33 55%,#6E2F2A);box-shadow:inset 0 -44px 70px rgba(0,0,0,.4)">
+            <span style="position:absolute;top:11px;right:11px;background:rgba(0,0,0,.55);color:#fff;font:600 10px 'Space Mono';padding:3px 9px;border-radius:999px">1/10</span>
+            <span style="position:absolute;bottom:11px;left:11px;font:600 9px 'Space Mono';color:#4ED17A;background:rgba(0,0,0,.5);padding:4px 9px;border-radius:999px">✓ PUBLISHED · APR 3</span>
+          </div>
+          <div style="font:400 12px 'Schibsted Grotesk';color:#C8C8CE;line-height:1.55">Tokyo taught us to slow down between bites — three days, ten plates, zero regrets. <span style="color:#5B8DEF">#tokyo #foodie</span></div>
+          <div style="display:flex;flex-direction:column;gap:9px;margin-top:auto;padding-bottom:22px">
+            <div onClick="{{ goShare }}" style="text-align:center;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);border-radius:14px;padding:14px;font:700 13px 'Schibsted Grotesk';color:#fff;box-shadow:0 8px 20px rgba(255,90,78,.4);cursor:pointer">↗ Re-share</div>
+            <div style="display:flex;gap:9px">
+              <div onClick="{{ saveAlbum }}" style="flex:1;text-align:center;background:#161618;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:13px;font:700 12px 'Schibsted Grotesk';cursor:pointer">⤓ Save again</div>
+              <div onClick="{{ goStory }}" style="flex:1;text-align:center;background:#161618;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:13px;font:700 12px 'Schibsted Grotesk';cursor:pointer">⎘ Duplicate</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ============ SUCCESS ============ -->
+      <sc-if value="{{ isSuccess }}">
+      <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:0 30px;text-align:center">
+        <div style="width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);display:flex;align-items:center;justify-content:center;font-size:46px;color:#fff;box-shadow:0 16px 40px rgba(255,90,78,.5)">✓</div>
+        <div><div style="font:800 22px 'Schibsted Grotesk';letter-spacing:-0.01em">All done</div><div style="font:500 13px 'Schibsted Grotesk';color:#9A9AA2;margin-top:8px;line-height:1.55">Your carousel is live and the caption's on your clipboard. Nicely curated.</div></div>
+        <div onClick="{{ goHome }}" style="margin-top:6px;background:#161618;border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:13px 30px;font:700 13px 'Schibsted Grotesk';cursor:pointer">Back to home</div>
+      </div>
+      </sc-if>
+
+      <!-- ============ FACE SETUP ============ -->
+      <sc-if value="{{ isFace }}">
+      <div style="height:100%;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 4px">
+          <span onClick="{{ back }}" style="font-size:22px;color:#9A9AA2;cursor:pointer">‹</span>
+          <span style="font:700 14px 'Schibsted Grotesk'">Your face</span><span style="width:16px"></span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:0 28px">
+          <div style="width:140px;height:140px;border-radius:50%;padding:4px;background:linear-gradient(135deg,#FFC65A,#FFAE3D,#FF5A4E)">
+            <div style="width:100%;height:100%;border-radius:50%;background:#161618;display:flex;align-items:center;justify-content:center;font-size:44px;color:#46464E;box-shadow:inset 0 0 0 2px #0A0A0B">☺</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font:800 19px 'Schibsted Grotesk';letter-spacing:-0.01em">Add a selfie first</div>
+            <div style="font:500 12px 'Schibsted Grotesk';color:#9A9AA2;margin-top:8px;line-height:1.55">The face filter needs to know what you look like. Pick one photo of yourself — Pixory learns it once, then keeps the shots that are actually <i>you</i> and drops the randoms.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px;background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:11px 14px;font:500 10px 'Schibsted Grotesk';color:#8A8A92">🔒 Stays on this device. Never uploaded.</div>
+        </div>
+        <div style="padding:14px 20px 24px;display:flex;flex-direction:column;gap:10px">
+          <div onClick="{{ setFace }}" style="text-align:center;background:linear-gradient(135deg,#FFAE3D,#FF5A4E);border-radius:15px;padding:15px;font:700 14px 'Schibsted Grotesk';color:#fff;box-shadow:0 10px 24px rgba(255,90,78,.4);cursor:pointer">Choose a selfie</div>
+          <div onClick="{{ back }}" style="text-align:center;font:600 12px 'Schibsted Grotesk';color:#7A7A82;padding:4px;cursor:pointer">Not now</div>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+  </div>
+
+  <div style="font:500 11px 'Schibsted Grotesk';color:#6A6A72">Demo prototype · amber→coral on black</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:384,&quot;height&quot;:760}}">
+class Component extends DCLogic {
+  state = { screen: 'home', prev: [], igConnected: false, tab: 'stories', faceSet: false };
+  nav(s) { this.setState(st => ({ screen: s, prev: [...st.prev, st.screen] })); }
+  renderVals() {
+    const s = this.state.screen;
+    const go = (x) => () => this.nav(x);
+    return {
+      isHome: s === 'home', isStory: s === 'story', isProc: s === 'proc',
+      isReview: s === 'review', isCaption: s === 'caption', isShare: s === 'share',
+      isIG: s === 'ig', isProfile: s === 'profile', isDetail: s === 'detail', isSuccess: s === 'success', isFace: s === 'face',
+      goStory: go('story'), goReview: go('review'), goCaption: go('caption'),
+      goShare: go('share'), goProfile: go('profile'), goHome: go('home'),
+      goDetail: go('detail'), goIG: go('ig'), goFace: go('face'),
+      faceSet: this.state.faceSet, noFace: !this.state.faceSet,
+      faceRowTap: () => { this.state.faceSet ? this.setState({ faceSet: false }) : this.nav('face'); },
+      setFace: () => { this.setState(st => { const p = [...st.prev]; const l = p.pop(); return { faceSet: true, screen: l || 'story', prev: p }; }); },
+      goProc: () => { this.nav('proc'); setTimeout(() => this.setState({ screen: 'review' }), 2300); },
+      tapPublished: go('detail'), tapDraft: go('review'),
+      postIG: () => { this.state.igConnected ? this.nav('success') : this.nav('ig'); },
+      connectIG: () => { this.setState({ igConnected: true }); this.nav('success'); },
+      saveAlbum: go('success'),
+      back: () => this.setState(st => { const p = [...st.prev]; const l = p.pop(); return { screen: l || 'home', prev: p }; }),
+      igConnected: this.state.igConnected,
+      isTabStories: this.state.tab === 'stories', isTabSaved: this.state.tab === 'saved', isTabSettings: this.state.tab === 'settings',
+      tabStories: () => this.setState({ tab: 'stories' }), tabSaved: () => this.setState({ tab: 'saved' }), tabSettings: () => this.setState({ tab: 'settings' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

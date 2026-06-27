@@ -1,11 +1,12 @@
+import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as MediaLibrary from 'expo-media-library';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect, useState } from 'react';
 import { Alert, Clipboard } from 'react-native';
-import { publishFromDevice } from '../../../lib/api';
-import { store } from '../../../lib/store';
+import { fetchAccountInfo, publishFromDevice } from '../../../lib/api';
+import { persistPrefs, store, upsertStory } from '../../../lib/store';
 import { IG_PASS_KEY, IG_USER_KEY, IgStatus, SaveStatus } from './types';
 
 export function usePublishState() {
@@ -44,10 +45,42 @@ export function usePublishState() {
           setIgUsername(u);
           setIgPassword(p);
           setIgConnected(true);
+          // First time connected → pull the real name/handle/avatar from Instagram
+          if (!store.handle) syncAccountInfo(u, p);
         }
       } catch { /* no saved creds */ }
     })();
   }, []);
+
+  /**
+   * Best-effort: fetch the user's Instagram profile (name, @handle, avatar)
+   * and fill the Profile screen. Never overwrites a name/photo the user set.
+   * The avatar is downloaded to local storage so it doesn't expire when
+   * Instagram's CDN URL rotates.
+   */
+  async function syncAccountInfo(u: string, p: string) {
+    try {
+      const info = await fetchAccountInfo({ username: u, password: p, backendUrl: store.backendUrl });
+      if (!info.success) return;
+      if (info.username) store.handle = info.username;
+      if (info.full_name && !store.displayName) store.displayName = info.full_name;
+      if (info.profile_pic_url && !store.profilePhotoUri) {
+        store.profilePhotoUri = await downloadAvatar(info.profile_pic_url);
+      }
+      await persistPrefs();
+    } catch { /* best-effort */ }
+  }
+
+  /** Download the avatar to DocumentDirectory; fall back to the remote URL on failure. */
+  async function downloadAvatar(url: string): Promise<string> {
+    try {
+      const dest = (FileSystem.documentDirectory ?? '') + 'pixory_avatar.jpg';
+      const { uri } = await FileSystem.downloadAsync(url, dest);
+      return uri;
+    } catch {
+      return url; // remote URL still works short-term
+    }
+  }
 
   // ── Save to Photos ────────────────────────────────────────────────────────
 
@@ -76,6 +109,18 @@ export function usePublishState() {
       setAlbumName(name);
       setSaveStatus('success');
       setSaveMsg('');
+      // Mark the story as saved-to-album in history
+      if (store.currentStoryId) {
+        await upsertStory({
+          id: store.currentStoryId,
+          savedToAlbum: true,
+          coverUri: photos[0] ?? '',
+          photoUris: photos,
+          photoCount: photos.length,
+          captionText,
+          hashtags: caption?.hashtags,
+        });
+      }
       // Auto-copy caption
       if (captionText) Clipboard.setString(captionText);
     } catch (e: any) {
@@ -104,6 +149,8 @@ export function usePublishState() {
       await SecureStore.setItemAsync(IG_USER_KEY, igUsername.trim());
       await SecureStore.setItemAsync(IG_PASS_KEY, igPassword);
       setIgConnected(true);
+      // Pull profile name/handle/avatar now that we're authenticated
+      syncAccountInfo(igUsername.trim(), igPassword);
 
       // Convert to JPEG for instagram-private-api
       const photosBase64: string[] = [];
@@ -131,6 +178,19 @@ export function usePublishState() {
       });
 
       if (!result.success) throw new Error(result.error ?? 'Post failed');
+
+      // Mark the story as published in history
+      if (store.currentStoryId) {
+        await upsertStory({
+          id: store.currentStoryId,
+          status: 'published',
+          coverUri: photos[0] ?? '',
+          photoUris: photos,
+          photoCount: photos.length,
+          captionText,
+          hashtags: caption?.hashtags,
+        });
+      }
 
       setIgStatus('success');
       setIgMsg(result.post_id ? `Posted! ID: ${result.post_id}` : 'Posted successfully!');

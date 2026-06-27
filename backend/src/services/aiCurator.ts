@@ -168,26 +168,33 @@ export async function curateWithOpenAI(
     }
   }
 
-  imageContent.push({
-    type: 'text',
-    text: buildSystemPrompt(photos.length, maxSelect, vibe, faceProfiles, favoriteIndices, contentMix, persona, !!userFaceB64),
-  });
+  const systemPrompt = buildSystemPrompt(photos.length, maxSelect, vibe, faceProfiles, favoriteIndices, contentMix, persona, !!userFaceB64);
 
   const response = await client.chat.completions.create(
     {
       model: OPENAI_VISION_MODEL,
-      max_tokens: 2048,
+      max_tokens: 4096,
       response_format: { type: 'json_object' },
-      messages: [{ role: 'user', content: imageContent }],
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: imageContent },
+      ],
     },
     { timeout: 90000 },
   );
 
-  if (response.choices[0]?.finish_reason === 'content_filter') {
+  const finishReason = response.choices[0]?.finish_reason;
+  if (finishReason === 'content_filter') {
     throw new Error('GPT-4o content filter triggered — try Claude instead');
   }
+  if (finishReason === 'length') {
+    throw new Error('GPT-4o hit max_tokens limit — response truncated, try with fewer photos');
+  }
 
-  const text = response.choices[0]?.message?.content ?? '{}';
+  const text = response.choices[0]?.message?.content;
+  if (!text) {
+    throw new Error(`GPT-4o returned empty content (finish_reason: ${finishReason ?? 'unknown'})`);
+  }
   return parseAiResponse(text);
 }
 
