@@ -14,7 +14,10 @@ import * as FileSystem from 'expo-file-system/legacy';
 import type { LocalPhoto } from '../store/state';
 import type { PersonaType } from '../store/state';
 
-const LEARNING_FILE = FileSystem.documentDirectory + 'pixory_learning_v1.json';
+// v2: v1 recorded outcomes against the raw (unscored) photo snapshot, so every
+// record carried default features (faceCount→0 etc.). v2 records against the
+// scored set — bump invalidates the polluted v1 history and starts clean.
+const LEARNING_FILE = FileSystem.documentDirectory + 'pixory_learning_v2.json';
 
 /** 6-dimensional feature vector matching the sidecar's vision signals. */
 export interface LearningFeatures {

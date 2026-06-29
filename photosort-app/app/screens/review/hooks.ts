@@ -23,6 +23,8 @@ export function useReviewState() {
   // Snapshot of the AI's original selection — used to distinguish "rejected AI pick"
   // from "deselected something the user themselves added"
   const initialSelectionRef = useRef<Set<string>>(new Set());
+  // Ensures the "kept" approval signal is recorded at most once per visit
+  const recordedKeptRef = useRef(false);
 
   // Cancel any pending timer + in-flight request when unmounting or navigating away
   useEffect(() => {
@@ -226,6 +228,19 @@ export function useReviewState() {
       seen.add(uri);
       return true;
     });
+
+    // Learn from the KEPT picks: photos the AI selected and the user accepted
+    // (left in the carousel) are a strong approval signal. Tray-added photos were
+    // already recorded by promote(); removed ones by deselect(). Record once per visit.
+    if (!recordedKeptRef.current) {
+      recordedKeptRef.current = true;
+      for (const item of ordered) {
+        if (!initialSelectionRef.current.has(item.localUri)) continue; // skip user-added (already recorded)
+        const photo = store.localPhotos.find((p) => p.localUri === item.localUri);
+        if (photo) recordOutcome(photo, 'promoted', store.persona);
+      }
+    }
+
     router.push('/caption');
   }
 

@@ -218,6 +218,11 @@ export function useProcessingState() {
       }
       if (cancelled.current) return;
 
+      // Replace the raw library snapshot with the SCORED set so the review
+      // screen's learning records (kept/promoted/rejected) carry real vision
+      // features (faceCount, sharpness, …) instead of defaults.
+      store.localPhotos = visionScored;
+
       // 8. Run pipeline
       if (store.method === 'classic') {
         push('Selecting best photos...', 70);
