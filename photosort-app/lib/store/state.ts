@@ -107,3 +107,19 @@ export const store: AppStore = {
   handle: '',
   currentStoryId: null,
 };
+
+/**
+ * Clear the per-story brief (story text, dates, place) when starting a NEW
+ * curation. Persona / face-filter / engine are settings, so they're preserved.
+ * Not called on back-navigation or Duplicate, which intentionally prefill.
+ */
+export function resetStoryBrief(): void {
+  store.vibe = '';
+  store.dateFrom = '';
+  store.dateTo = '';
+  store.locationName = '';
+  store.locationLat = null;
+  store.locationLon = null;
+  store.postLocation = '';
+  store.currentStoryId = null;
+}

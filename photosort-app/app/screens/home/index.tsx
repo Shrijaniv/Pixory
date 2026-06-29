@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientText, StatusPill, TabBar } from '../../../components/ui';
-import { store } from '../../../lib/store';
+import { resetStoryBrief, store } from '../../../lib/store';
 import { Gradients } from '../../../lib/theme';
 import { useHomeState } from './hooks';
 import { styles } from './styles';
@@ -37,7 +37,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Hero card */}
-        <Pressable onPress={() => router.push('/new-story')}>
+        <Pressable onPress={() => { resetStoryBrief(); router.push('/new-story'); }}>
           <LinearGradient
             colors={Gradients.accentHero}
             start={{ x: 0, y: 0 }}

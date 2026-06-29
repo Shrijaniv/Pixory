@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { resetStoryBrief } from '../../lib/store';
 import { Colors, Gradients, Radius, Typography } from '../../lib/theme';
 import GradientText from './GradientText';
 
@@ -25,7 +26,7 @@ export default function TabBar({ active }: Props) {
           : <Text style={[styles.label, styles.labelInactive]}>Home</Text>}
       </Pressable>
 
-      <Pressable style={styles.fabSlot} onPress={() => router.push('/new-story')}>
+      <Pressable style={styles.fabSlot} onPress={() => { resetStoryBrief(); router.push('/new-story'); }}>
         <LinearGradient
           colors={Gradients.accent}
           start={{ x: 0, y: 0 }}
