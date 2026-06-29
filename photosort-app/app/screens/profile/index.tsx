@@ -17,6 +17,7 @@ export default function ProfileScreen() {
     filterByUserFace, toggleFaceFilter, openFaceSetup,
     igHandle, persona, personaName, choosePersona,
     methodLabel, cycleMethod,
+    faceEngineLabel, cycleFaceEngine,
     backendUrl, updateBackendUrl,
     notifications, setNotifications,
     displayName, handle, avatarUri,
@@ -85,6 +86,16 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Your taste */}
+        <Pressable style={styles.tasteCard} onPress={() => router.push('/taste')}>
+          <Text style={styles.tasteIcon}>✨</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.tasteTitle}>Your taste</Text>
+            <Text style={styles.tasteSub}>See what we’ve learned about your style</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </Pressable>
+
         {/* Tabs */}
         <View style={styles.tabs}>
           {(['stories', 'saved', 'settings'] as const).map((t) => (
@@ -135,6 +146,15 @@ export default function ProfileScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.settingTitle}>Curation engine</Text>
                 <Text style={styles.settingSub}>{methodLabel}</Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </Pressable>
+
+            <Pressable style={styles.settingRow} onPress={cycleFaceEngine}>
+              <Text style={styles.settingIcon}>🧪</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingTitle}>Face engine (experimental)</Text>
+                <Text style={styles.settingSub}>{faceEngineLabel}</Text>
               </View>
               <Text style={styles.chevron}>›</Text>
             </Pressable>

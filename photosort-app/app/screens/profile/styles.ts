@@ -46,6 +46,23 @@ export const styles = StyleSheet.create({
   statNum: { ...Typography.title, color: Colors.text },
   statLabel: { ...Typography.bodySm, color: Colors.textFaint, marginTop: 2 },
 
+  // Your taste card
+  tasteCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    backgroundColor: Colors.accentWash,
+    borderWidth: 1,
+    borderColor: Colors.accentWashBorder,
+    borderRadius: Radius.input,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  tasteIcon: { fontSize: 18 },
+  tasteTitle: { ...Typography.titleSm, color: Colors.text },
+  tasteSub: { ...Typography.bodySm, color: Colors.textMuted, marginTop: 1 },
+
   // Tabs
   tabs: { flexDirection: 'row', gap: Spacing.xl, marginBottom: Spacing.lg },
   tabLabel: { ...Typography.titleSm, color: Colors.textDim },
