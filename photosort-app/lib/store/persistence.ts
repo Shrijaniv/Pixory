@@ -36,6 +36,7 @@ export async function loadPersistedPrefs(): Promise<void> {
     if (saved.contentMix)  store.contentMix  = saved.contentMix as ContentMix;
     if (saved.persona)     store.persona     = saved.persona as PersonaType;
     if (saved.filterByUserFace !== undefined) store.filterByUserFace = saved.filterByUserFace;
+    if (saved.faceEngine !== undefined)       store.faceEngine       = saved.faceEngine;
     if (saved.profilePhotoUri !== undefined)  store.profilePhotoUri  = saved.profilePhotoUri;
     if (saved.displayName !== undefined)      store.displayName      = saved.displayName;
     if (saved.handle !== undefined)           store.handle           = saved.handle;
@@ -50,6 +51,7 @@ export async function persistPrefs(): Promise<void> {
       contentMix:        store.contentMix,
       persona:           store.persona,
       filterByUserFace:  store.filterByUserFace,
+      faceEngine:        store.faceEngine,
       profilePhotoUri:   store.profilePhotoUri,
       displayName:       store.displayName,
       handle:            store.handle,

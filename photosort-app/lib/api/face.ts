@@ -3,11 +3,12 @@
 export async function registerFace(params: {
   photoBase64: string;
   backendUrl: string;
-}): Promise<{ success: boolean; embedding?: number[]; error?: string }> {
+  faceEngine?: 'deepface' | 'insightface';
+}): Promise<{ success: boolean; embedding?: number[]; engine?: string; dim?: number; error?: string }> {
   const res = await fetch(`${params.backendUrl}/api/register_face`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ photo_b64: params.photoBase64 }),
+    body: JSON.stringify({ photo_b64: params.photoBase64, face_engine: params.faceEngine }),
   });
   return res.json();
 }
@@ -16,6 +17,7 @@ export async function matchFaces(params: {
   referenceEmbedding: number[];
   photos: Array<{ index: number; data_b64: string }>;
   backendUrl: string;
+  faceEngine?: 'deepface' | 'insightface';
 }): Promise<{ matches: Array<{ index: number; user_face_present: boolean; similarity: number }> }> {
   try {
     const res = await fetch(`${params.backendUrl}/api/match_faces`, {
@@ -24,6 +26,7 @@ export async function matchFaces(params: {
       body: JSON.stringify({
         reference_embedding: params.referenceEmbedding,
         photos:              params.photos,
+        face_engine:         params.faceEngine,
       }),
     });
     return res.json();

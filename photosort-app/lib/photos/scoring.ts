@@ -137,9 +137,10 @@ export async function scoreWithBackend(
     onProgress?: (msg: string) => void;
     contentMix?: ContentMix;
     persona?: PersonaType | null;
+    faceEngine?: 'deepface' | 'insightface';
   } = {},
 ): Promise<LocalPhoto[]> {
-  const { candidateLimit = 120, onProgress } = options;
+  const { candidateLimit = 120, onProgress, faceEngine } = options;
 
   if (!backendUrl) {
     onProgress?.('⚠ No backend URL — using file-size ranking only');
@@ -182,7 +183,7 @@ export async function scoreWithBackend(
     const resp = await fetch(`${backendUrl}/api/score_photos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ photos: payload }),
+      body: JSON.stringify({ photos: payload, face_engine: faceEngine }),
     });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 

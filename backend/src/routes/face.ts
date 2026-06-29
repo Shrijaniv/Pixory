@@ -13,7 +13,7 @@ export async function faceRoutes(app: FastifyInstance) {
    * Called once during "Who Are You?" face-setup flow.
    */
   app.post<{ Body: RegisterFaceBody }>('/api/register_face', async (request, reply) => {
-    const { photo_b64 } = request.body;
+    const { photo_b64, face_engine } = request.body;
     if (!photo_b64) {
       return reply.status(400).send({ success: false, error: 'photo_b64 is required' });
     }
@@ -21,7 +21,7 @@ export async function faceRoutes(app: FastifyInstance) {
     try {
       const result = await fetchSidecar<RegisterFaceResult>(
         '/register_face',
-        { photo_b64 },
+        { photo_b64, face_engine },
         30_000, // embedding extraction ~5s
       );
       return reply.send(result);
@@ -38,18 +38,18 @@ export async function faceRoutes(app: FastifyInstance) {
    * Fail-open: on network errors returns all photos as user-present.
    */
   app.post<{ Body: MatchFacesBody }>('/api/match_faces', async (request, reply) => {
-    const { reference_embedding, photos, threshold } = request.body;
+    const { reference_embedding, photos, threshold, face_engine } = request.body;
     if (!reference_embedding?.length || !photos?.length) {
       return reply.send({ matches: [] });
     }
 
-    request.log.info(`[face] match_faces: ${photos.length} photos`);
+    request.log.info(`[face] match_faces: ${photos.length} photos (engine=${face_engine ?? 'default'})`);
 
     try {
       const result = await fetchSidecar<MatchFacesResult>(
         '/match_faces',
-        { reference_embedding, photos, threshold },
-        120_000, // ~200–500ms per photo via DeepFace
+        { reference_embedding, photos, threshold, face_engine },
+        120_000, // ~200–500ms per photo
       );
       return reply.send(result);
     } catch (err: unknown) {

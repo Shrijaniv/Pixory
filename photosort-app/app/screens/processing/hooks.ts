@@ -3,7 +3,7 @@ import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, ScrollView } from 'react-native';
 import { curateDevicePhotos, matchFaces } from '../../../lib/api';
-import { loadIdentity } from '../../../lib/identity';
+import { embeddingForEngine, loadIdentity } from '../../../lib/identity';
 import { learningInsight, loadLearningHistory } from '../../../lib/learning';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -142,7 +142,7 @@ export function useProcessingState() {
       // 6. Backend scoring (OpenCV sharpness + face detection via Python sidecar)
       // Sends top 120 candidates as 512px thumbnails to /api/score_photos.
       // Falls back silently to file-size ranking if the backend is unreachable.
-      let visionScored = await scoreWithBackend(dedupedPhotos, store.backendUrl, { candidateLimit: 120, onProgress: push, contentMix: store.contentMix, persona: store.persona });
+      let visionScored = await scoreWithBackend(dedupedPhotos, store.backendUrl, { candidateLimit: 120, onProgress: push, contentMix: store.contentMix, persona: store.persona, faceEngine: store.faceEngine });
       if (cancelled.current) return;
 
       // 7. Face identity filter (optional — only when user has set up identity + toggle is on)
@@ -162,9 +162,14 @@ export function useProcessingState() {
             // Non-fatal — AI will still run without the reference face
           }
 
+          // Reference embedding for the active engine (deepface/insightface are not interchangeable)
+          const refEmbedding = embeddingForEngine(identity, store.faceEngine);
+          if (!refEmbedding) {
+            push(`Face filter skipped — your selfie isn't registered for the ${store.faceEngine} engine. Re-add it in face setup.`);
+          }
           // Only check photos where face_count > 0 — landscapes/food always pass
-          const facePhotos = visionScored.filter((p) => (p.faceCount ?? 0) > 0);
-          if (facePhotos.length > 0) {
+          const facePhotos = refEmbedding ? visionScored.filter((p) => (p.faceCount ?? 0) > 0) : [];
+          if (refEmbedding && facePhotos.length > 0) {
             push(`Checking ${facePhotos.length} photo${facePhotos.length !== 1 ? 's' : ''} for your face...`);
             try {
               // Encode face photos at 512px for matching
@@ -179,9 +184,10 @@ export function useProcessingState() {
               }
 
               const result = await matchFaces({
-                referenceEmbedding: identity.embedding,
+                referenceEmbedding: refEmbedding,
                 photos: encoded,
                 backendUrl: store.backendUrl,
+                faceEngine: store.faceEngine,
               });
 
               // Build set of URIs to drop: face detected but user not in it

@@ -40,6 +40,9 @@ export interface LocalPhoto {
 
 export type ContentMix = 'people' | 'balanced' | 'places';
 
+/** Which on-device face model the sidecar uses (experimental A/B). */
+export type FaceEngine = 'deepface' | 'insightface';
+
 export type PersonaType =
   | 'aesthete'      // saturation-primary palette coherence; complexity penalised
   | 'social'        // happy faces dominate; taggable moments
@@ -71,6 +74,7 @@ export interface AppStore {
   chosenCaption: Caption | null;
   postLocation: string;
   filterByUserFace: boolean;
+  faceEngine: FaceEngine;
   profilePhotoUri: string | null;
   displayName: string;
   handle: string;
@@ -102,6 +106,7 @@ export const store: AppStore = {
   chosenCaption: null,
   postLocation: '',
   filterByUserFace: false,
+  faceEngine: 'deepface',
   profilePhotoUri: null,
   displayName: '',
   handle: '',

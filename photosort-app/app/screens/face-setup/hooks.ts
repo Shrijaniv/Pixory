@@ -6,6 +6,7 @@ import { Alert } from 'react-native';
 import { registerFace } from '../../../lib/api';
 import {
   FaceIdentity,
+  IdentityEngine,
   clearIdentity,
   loadIdentity,
   saveIdentity,
@@ -84,24 +85,42 @@ export function useFaceSetupState() {
 
       if (!manipulated.base64) throw new Error('Failed to encode photo');
 
-      let result;
-      try {
-        result = await registerFace({
-          photoBase64: manipulated.base64,
-          backendUrl: store.backendUrl,
-        });
-      } catch (netErr: any) {
-        // Surface the exact URL so connection problems are diagnosable
-        throw new Error(`Can't reach backend at ${store.backendUrl} — ${netErr?.message ?? 'network error'}`);
+      // Register against BOTH engines once so the my-face filter works under
+      // either during A/B testing. If an engine isn't installed on the sidecar
+      // it just won't produce an embedding — the other still works.
+      const engines: IdentityEngine[] = ['deepface', 'insightface'];
+      const embeddings: Partial<Record<IdentityEngine, number[]>> = {};
+      let lastError = '';
+      for (const eng of engines) {
+        let result;
+        try {
+          result = await registerFace({
+            photoBase64: manipulated.base64,
+            backendUrl: store.backendUrl,
+            faceEngine: eng,
+          });
+        } catch (netErr: any) {
+          // Surface the exact URL so connection problems are diagnosable
+          throw new Error(`Can't reach backend at ${store.backendUrl} — ${netErr?.message ?? 'network error'}`);
+        }
+        if (result.success && result.embedding) embeddings[eng] = result.embedding;
+        else lastError = result.error ?? lastError;
       }
 
-      if (!result.success || !result.embedding) {
-        throw new Error(result.error ?? 'No face detected');
+      // Primary = the currently-selected engine if it registered, else whatever did
+      const primaryEngine: IdentityEngine =
+        embeddings[store.faceEngine] ? store.faceEngine
+        : embeddings.deepface ? 'deepface'
+        : 'insightface';
+      const primary = embeddings[primaryEngine];
+      if (!primary) {
+        throw new Error(lastError || 'No face detected');
       }
 
-      // Save identity locally — embedding + reference photo URI
       const identity: FaceIdentity = {
-        embedding: result.embedding,
+        embedding: primary,
+        embeddings,
+        engine: primaryEngine,
         refPhotoUri: pickedUri,
         createdAt: Date.now(),
       };

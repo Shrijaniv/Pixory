@@ -16,24 +16,17 @@ from typing import List
 import imagehash
 import numpy as np
 import cv2
-from deepface import DeepFace
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 from pydantic import BaseModel
 from instagrapi import Client
 
-# Face detection backend for DeepFace.
-# mtcnn: better than opencv (handles angles, partial faces, groups)
-# retinaface: most accurate but slower — good if GPU available
-# opencv: fastest, least accurate — use for testing only
-DEEPFACE_BACKEND = 'mtcnn'
+# Pluggable face engine (DeepFace or InsightFace), chosen per-request.
+# The heavy ML libs are imported lazily inside each engine, so this import is cheap.
+from face_engines import get_engine, DEFAULT_ENGINE
 
-# Haar cascade kept as a per-photo fallback inside score_photos when
-# DeepFace fails on a specific image (corrupted, extreme lighting, etc.)
-_face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-
-print(f"[sidecar] DeepFace loaded — face identity filtering available (backend: {DEEPFACE_BACKEND})")
+print(f"[sidecar] face engine default: {DEFAULT_ENGINE} (per-request override via face_engine)")
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -156,6 +149,7 @@ class ScorePhotoItem(BaseModel):
 
 class ScoreRequest(BaseModel):
     photos: List[ScorePhotoItem]
+    face_engine: str | None = None   # 'deepface' | 'insightface' (None → server default)
 
 
 class PhotoScore(BaseModel):
@@ -180,11 +174,14 @@ class ScoreResult(BaseModel):
 
 class RegisterFaceRequest(BaseModel):
     photo_b64: str
+    face_engine: str | None = None   # which engine produces the embedding
 
 
 class RegisterFaceResult(BaseModel):
     success: bool
     embedding: list[float] | None = None
+    engine: str | None = None        # engine that produced the embedding
+    dim: int | None = None           # embedding dimensionality
     error: str | None = None
 
 
@@ -196,7 +193,8 @@ class MatchFaceItem(BaseModel):
 class MatchFaceRequest(BaseModel):
     reference_embedding: list[float]
     photos: list[MatchFaceItem]
-    threshold: float = 0.45  # cosine similarity cutoff — 0.45 handles angle/lighting variation
+    face_engine: str | None = None   # MUST match the engine that registered the reference
+    threshold: float | None = None   # None → engine's default cosine cutoff
 
 
 class MatchFaceResultItem(BaseModel):
@@ -213,7 +211,7 @@ class MatchFaceResult(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "publish-sidecar", "deepface": True, "backend": DEEPFACE_BACKEND}
+    return {"status": "ok", "service": "publish-sidecar", "face_engine_default": DEFAULT_ENGINE}
 
 
 @app.post("/search_location", response_model=LocationSearchResult)
@@ -256,11 +254,16 @@ def search_location(req: LocationSearchRequest):
 @app.post("/score_photos", response_model=ScoreResult)
 def score_photos(req: ScoreRequest):
     """
-    Score photos using DeepFace (emotion-aware face detection) + OpenCV signals.
-    Per-photo errors fall back to Haar cascade so one bad image never fails the batch.
+    Score photos using the selected face engine (emotion-aware detection) + OpenCV signals.
+    Per-photo errors return a neutral score so one bad image never fails the batch.
     """
     results: List[PhotoScore] = []
-    _HAPPY_EMOTIONS = {'happy', 'surprise'}
+    try:
+        engine = get_engine(req.face_engine)
+    except Exception as e:
+        # Engine not installed → score everything else, just without face signals.
+        print(f"[sidecar] face engine '{req.face_engine}' unavailable — scoring without faces: {e}")
+        engine = None
 
     for item in req.photos:
         try:
@@ -281,38 +284,15 @@ def score_photos(req: ScoreRequest):
             lap_var = cv2.Laplacian(gray, cv2.CV_64F).var()
             sharpness = float(min(max((lap_var - 10.0) / (500.0 - 10.0), 0.0), 1.0))
 
-            # Face count + emotion detection via DeepFace
-            # enforce_detection=False returns empty list for no-face photos (landscapes, food)
-            face_count = 0
-            happy_face_count = 0
-            face_bboxes: list[tuple[int, int, int, int]] = []  # (x, y, w, h)
-            try:
-                face_results = DeepFace.analyze(
-                    img,
-                    actions=['emotion'],
-                    detector_backend=DEEPFACE_BACKEND,
-                    enforce_detection=False,
-                    silent=True,
-                )
-                if isinstance(face_results, dict):
-                    face_results = [face_results]
-                face_count = len(face_results)
-                happy_face_count = sum(
-                    1 for f in face_results
-                    if f.get('dominant_emotion', '') in _HAPPY_EMOTIONS
-                )
-                # Extract bounding boxes for shot type estimation
-                for f in face_results:
-                    region = f.get('region', {})
-                    w, h = region.get('w', 0), region.get('h', 0)
-                    if w > 0 and h > 0:
-                        face_bboxes.append((region.get('x', 0), region.get('y', 0), w, h))
-            except Exception:
-                # Per-photo fallback to Haar cascade (corrupted image, extreme lighting, etc.)
-                detected = _face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-                face_count = len(detected)
-                happy_face_count = 0
-                face_bboxes = [(int(x), int(y), int(w), int(h)) for (x, y, w, h) in detected]
+            # Face count + emotion + bounding boxes via the selected engine.
+            # (DeepFace handles its own Haar fallback internally; InsightFace uses SCRFD.)
+            if engine is not None:
+                analysis = engine.analyze(img)
+                face_count = analysis.count
+                happy_face_count = analysis.happy_count
+                face_bboxes = analysis.bboxes  # list of (x, y, w, h)
+            else:
+                face_count, happy_face_count, face_bboxes = 0, 0, []
 
             # ── Shot type estimation ──────────────────────────────────────
             img_area = img.shape[0] * img.shape[1]
@@ -422,30 +402,23 @@ def register_face(req: RegisterFaceRequest):
     if img is None:
         return RegisterFaceResult(success=False, error="Could not decode image")
 
-    attempts = [
-        (DEEPFACE_BACKEND, True),   # preferred: strict detection
-        (DEEPFACE_BACKEND, False),  # fallback 1: permissive — catches borderline confidence
-        ('opencv', False),          # fallback 2: opencv is most permissive, works on nearly all photos
-    ]
+    try:
+        engine = get_engine(req.face_engine)
+    except Exception as e:
+        return RegisterFaceResult(success=False, engine=req.face_engine, error=f"Face engine unavailable: {e}")
+    try:
+        embedding = engine.embed_reference(img)
+    except Exception as e:
+        print(f"[sidecar] register_face ({engine.name}) error: {e}")
+        embedding = None
 
-    for backend, enforce in attempts:
-        try:
-            result = DeepFace.represent(
-                img,
-                model_name='Facenet',
-                enforce_detection=enforce,
-                detector_backend=backend,
-            )
-            if not result:
-                continue
-            embedding = result[0]['embedding']
-            print(f"[sidecar] register_face: OK (backend={backend}, enforce={enforce}, dims={len(embedding)})")
-            return RegisterFaceResult(success=True, embedding=embedding)
-        except Exception as e:
-            print(f"[sidecar] register_face attempt failed (backend={backend}, enforce={enforce}): {e}")
+    if embedding:
+        print(f"[sidecar] register_face: OK (engine={engine.name}, dims={len(embedding)})")
+        return RegisterFaceResult(success=True, embedding=embedding, engine=engine.name, dim=len(embedding))
 
     return RegisterFaceResult(
         success=False,
+        engine=engine.name,
         error="No face detected — try a clearer, well-lit photo where your face is fully visible and centred",
     )
 
@@ -457,6 +430,15 @@ def match_faces(req: MatchFaceRequest):
     Returns per-photo similarity scores and whether the user's face is present.
     Only called for photos where face_count > 0 (already determined by score_photos).
     """
+    try:
+        engine = get_engine(req.face_engine)
+    except Exception as e:
+        # Engine unavailable → fail-open (don't drop anyone's photos).
+        print(f"[sidecar] match_faces engine '{req.face_engine}' unavailable — failing open: {e}")
+        return MatchFaceResult(matches=[
+            MatchFaceResultItem(index=p.index, user_face_present=True, similarity=0.5) for p in req.photos
+        ])
+    threshold = req.threshold if req.threshold is not None else engine.match_threshold
     ref = np.array(req.reference_embedding)
     ref_norm = np.linalg.norm(ref)
     results = []
@@ -469,13 +451,8 @@ def match_faces(req: MatchFaceRequest):
                 results.append(MatchFaceResultItem(index=photo.index, user_face_present=True, similarity=0.5))
                 continue
 
-            # enforce_detection=False: returns empty list for no-face crops rather than raising
-            representations = DeepFace.represent(
-                img,
-                model_name='Facenet',
-                enforce_detection=False,
-                detector_backend=DEEPFACE_BACKEND,
-            )
+            # Every face's embedding from the selected engine (empty for no-face crops)
+            representations = engine.embed_all(img)
 
             if not representations:
                 # No face found at embedding stage — don't filter the photo out
@@ -484,15 +461,15 @@ def match_faces(req: MatchFaceRequest):
 
             # Find the best (highest cosine similarity) face in the photo
             best_sim = 0.0
-            for rep in representations:
-                cand = np.array(rep['embedding'])
+            for cand_vec in representations:
+                cand = np.array(cand_vec)
                 cand_norm = np.linalg.norm(cand)
                 if cand_norm == 0:
                     continue
                 sim = float(np.dot(ref, cand) / (ref_norm * cand_norm))
                 best_sim = max(best_sim, sim)
 
-            user_face_present = best_sim >= req.threshold
+            user_face_present = best_sim >= threshold
             results.append(MatchFaceResultItem(
                 index=photo.index,
                 user_face_present=user_face_present,

@@ -4,10 +4,25 @@
  */
 import * as FileSystem from 'expo-file-system/legacy';
 
+export type IdentityEngine = 'deepface' | 'insightface';
+
 export interface FaceIdentity {
-  embedding: number[];  // Facenet128 vector (128 floats)
+  embedding: number[];  // primary embedding (kept for back-compat with v1 identities)
+  /** Per-engine embeddings so the my-face filter works under either engine (A/B). */
+  embeddings?: Partial<Record<IdentityEngine, number[]>>;
+  /** Engine that produced the primary `embedding`. */
+  engine?: IdentityEngine;
   refPhotoUri: string;  // file:// URI of the reference photo (for display)
   createdAt: number;    // ms epoch timestamp
+}
+
+/** Pick the stored embedding for a given engine, falling back to the primary. */
+export function embeddingForEngine(id: FaceIdentity, engine: IdentityEngine): number[] | null {
+  const e = id.embeddings?.[engine];
+  if (e && e.length) return e;
+  // Legacy identities only have the primary embedding; only valid if it matches the engine.
+  if ((id.engine ?? 'deepface') === engine && id.embedding.length) return id.embedding;
+  return null;
 }
 
 const IDENTITY_FILE = (FileSystem.documentDirectory ?? '') + 'pixory_identity_v1.json';

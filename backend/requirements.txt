@@ -3,7 +3,14 @@ uvicorn[standard]
 instagrapi
 opencv-python
 numpy
-deepface
-tf-keras
 Pillow
 ImageHash
+
+# Face engine: DeepFace (TensorFlow) — current default
+deepface
+tf-keras
+
+# Face engine: InsightFace path — runs entirely on onnxruntime (no TensorFlow)
+insightface
+onnxruntime
+hsemotion-onnx
