@@ -85,42 +85,26 @@ export function useFaceSetupState() {
 
       if (!manipulated.base64) throw new Error('Failed to encode photo');
 
-      // Register against BOTH engines once so the my-face filter works under
-      // either during A/B testing. If an engine isn't installed on the sidecar
-      // it just won't produce an embedding — the other still works.
-      const engines: IdentityEngine[] = ['deepface', 'insightface'];
-      const embeddings: Partial<Record<IdentityEngine, number[]>> = {};
-      let lastError = '';
-      for (const eng of engines) {
-        let result;
-        try {
-          result = await registerFace({
-            photoBase64: manipulated.base64,
-            backendUrl: store.backendUrl,
-            faceEngine: eng,
-          });
-        } catch (netErr: any) {
-          // Surface the exact URL so connection problems are diagnosable
-          throw new Error(`Can't reach backend at ${store.backendUrl} — ${netErr?.message ?? 'network error'}`);
-        }
-        if (result.success && result.embedding) embeddings[eng] = result.embedding;
-        else lastError = result.error ?? lastError;
+      const engine: IdentityEngine = store.faceEngine;
+      let result;
+      try {
+        result = await registerFace({
+          photoBase64: manipulated.base64,
+          backendUrl: store.backendUrl,
+          faceEngine: engine,
+        });
+      } catch (netErr: any) {
+        // Surface the exact URL so connection problems are diagnosable
+        throw new Error(`Can't reach backend at ${store.backendUrl} — ${netErr?.message ?? 'network error'}`);
       }
-
-      // Primary = the currently-selected engine if it registered, else whatever did
-      const primaryEngine: IdentityEngine =
-        embeddings[store.faceEngine] ? store.faceEngine
-        : embeddings.deepface ? 'deepface'
-        : 'insightface';
-      const primary = embeddings[primaryEngine];
-      if (!primary) {
-        throw new Error(lastError || 'No face detected');
+      if (!result.success || !result.embedding) {
+        throw new Error(result.error ?? 'No face detected');
       }
 
       const identity: FaceIdentity = {
-        embedding: primary,
-        embeddings,
-        engine: primaryEngine,
+        embedding: result.embedding,
+        embeddings: { [engine]: result.embedding },
+        engine,
         refPhotoUri: pickedUri,
         createdAt: Date.now(),
       };

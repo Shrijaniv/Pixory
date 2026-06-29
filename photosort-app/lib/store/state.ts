@@ -106,7 +106,7 @@ export const store: AppStore = {
   chosenCaption: null,
   postLocation: '',
   filterByUserFace: false,
-  faceEngine: 'deepface',
+  faceEngine: 'insightface',
   profilePhotoUri: null,
   displayName: '',
   handle: '',

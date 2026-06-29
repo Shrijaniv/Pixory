@@ -3,7 +3,6 @@ import { useCallback, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { loadIdentity } from '../../../lib/identity';
 import {
-  FaceEngine,
   loadPersistedPrefs,
   loadStories,
   persistPrefs,
@@ -25,7 +24,6 @@ export function useProfileState() {
   const [igHandle, setIgHandle] = useState<string | null>(null);
   const [persona, setPersona] = useState<PersonaType | null>(store.persona);
   const [method, setMethod] = useState(store.method);
-  const [faceEngine, setFaceEngine] = useState<FaceEngine>(store.faceEngine);
   const [backendUrl, setBackendUrl] = useState(store.backendUrl);
   const [notifications, setNotifications] = useState(true);
   const [displayName, setDisplayName] = useState(store.displayName);
@@ -37,7 +35,6 @@ export function useProfileState() {
     loadPersistedPrefs().then(() => {
       setPersona(store.persona);
       setMethod(store.method);
-      setFaceEngine(store.faceEngine);
       setFilterByUserFace(store.filterByUserFace);
       setBackendUrl(store.backendUrl);
       setDisplayName(store.displayName);
@@ -85,13 +82,6 @@ export function useProfileState() {
     persistPrefs();
   }
 
-  function cycleFaceEngine() {
-    const next: FaceEngine = faceEngine === 'deepface' ? 'insightface' : 'deepface';
-    setFaceEngine(next);
-    store.faceEngine = next;
-    persistPrefs();
-  }
-
   function updateBackendUrl(v: string) {
     setBackendUrl(v);
     store.backendUrl = v;
@@ -104,7 +94,6 @@ export function useProfileState() {
 
   const personaName = PERSONAS.find((p) => p.id === persona)?.name ?? 'No preference';
   const methodLabel = method === 'classic' ? 'Auto Select (on-device)' : 'AI · GPT-4o';
-  const faceEngineLabel = faceEngine === 'deepface' ? 'DeepFace (TensorFlow)' : 'InsightFace (onnx)';
 
   return {
     tab,
@@ -121,8 +110,6 @@ export function useProfileState() {
     choosePersona,
     methodLabel,
     cycleMethod,
-    faceEngineLabel,
-    cycleFaceEngine,
     backendUrl,
     updateBackendUrl,
     notifications,

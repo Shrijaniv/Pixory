@@ -10,7 +10,7 @@ import os
 
 from .base import FaceAnalysis, FaceEngine
 
-DEFAULT_ENGINE = os.environ.get('FACE_ENGINE', 'deepface').lower()
+DEFAULT_ENGINE = os.environ.get('FACE_ENGINE', 'insightface').lower()
 
 _cache: dict[str, FaceEngine] = {}
 
