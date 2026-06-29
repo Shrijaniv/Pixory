@@ -1,6 +1,6 @@
 # Pixory — Task Sheet
 
-> Last updated: 2026-05-15
+> Last updated: 2026-06-28
 > Status key: ✅ Done · 🔄 Has issues · ⏳ Pending · 🚫 Blocked
 
 ---
@@ -12,7 +12,7 @@
 | C-1 | **GPS / location filter** | ✅ | `parseFloat` fix resolved string-vs-number bug in `expo-media-library`. Working in Expo Go. Native `PHAsset.fetchAssets` path activates on dev build (H-1) |
 | C-2 | **Reorganize ordering** | 🔄 | Encode-index mapping fix applied. AI occasionally misplaces CLOSER badge — still being tuned |
 | C-3 | **Backend URL on device** | ⏳ | `localhost:8000` resolves to the phone, not the Mac. User must set Mac LAN IP manually. Need auto-detect or a clear hint in the UI |
-| C-4 | **Instagram publish screen** | 🔄 | Credentials stored via `expo-secure-store` ✅. Instagram location tagging via `cl.location_search` wired end-to-end ✅. Dedicated `instagram-account.tsx` screen still pending |
+| C-4 | **Instagram publish screen** | ✅ | Dedicated `instagram-connect` screen shipped (creds via `expo-secure-store`, location tagging via `cl.location_search`). Plus `/account_info` auto-sync pulls name/@handle/avatar into Profile after connecting |
 | C-5 | **Thumbnails blank in caption + publish** | ⏳ | `thumbnailUrl()` sends a `file://` path to the backend which can't open it. Replace with direct `localUri` on both screens |
 
 ---
@@ -32,8 +32,9 @@
 | H-9 | **Per-persona scoring** | ✅ | `computePersonaScore()` uses 9 sidecar signals; Storyteller diversity bonus in `topCandidates()` |
 | H-10 | **Active AI review** | ✅ | Debounced `assignRoles` call on selection change; role badges on each photo |
 | H-11 | **Story banner + role badges** | ✅ | HOOK / WORLD / LIFE / DETAIL / CLOSER with colour codes in review screen |
-| H-12 | **Implicit preference learning** | ⏳ | Learn from what the user keeps, rejects, promotes from runner-up tray, and adds from favorites — refine scoring weights and AI prompt over time. See design notes below |
-| H-13 | **Cloud backend + remove URL field** | ⏳ | Deploy backend to Railway (or Fly.io). Hard-code the production URL, remove the backend URL input from settings entirely. Updates to curation logic ship automatically without users doing anything |
+| H-12 | **Implicit preference learning** | ✅ | Implemented as running averages in `pixory_learning_v1.json` (`lib/learning/`). `recordOutcome` on promote/reject; `computeLearningBias` (cosine vs promoted/rejected avg) biases scoring; `learningInsight` one-liner on Processing |
+| H-13 | **Cloud backend + remove URL field** | 🔄 | Dockerfile + Fly/Railway config ready; backend URL now defaults to LAN IP w/ self-healing migration. Still using a user-set URL (not a hard-coded prod URL) — full removal pending a real deploy |
+| H-14 | **Taste profile surface** | 🔄 | "Your taste" screen (`app/screens/taste/`) built on `computeTasteProfile` (`lib/learning/insights.ts`) over `pixory_learning_v1.json` — narrative + trait-lean bars + dominant group, reached from Profile. Builds on H-12. LLM-written narrative = future enhancement |
 
 ---
 
@@ -62,21 +63,24 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| F-1 | **Feed analyzer** | ⏳ | Scan existing Instagram posts → infer persona automatically |
+| F-1 | **Feed analyzer / IG taste seeding** | ⏳ | Seed the taste model from the user's existing posts (a published post = a curated "promoted" choice). Sidecar `/user_media` (`cl.user_medias(user_id, ~30)`, flatten carousels) → backend `/api/user_media` proxy → download → existing `score_photos` → write the 6 features into `pixory_learning_v1.json` as promoted (reuse the running-avg update path). Opt-in. Caveats: one-sided signal (positives only, no rejected contrast); `instagrapi` unofficial (rate limits / challenges / ToS — already accepted for publishing); cap 30–50 posts. Populates H-14 for brand-new users. Graph-API alternative = F-8 |
 | F-2 | **Custom persona creator** | ⏳ | "Describe your posting style" → AI generates a bespoke persona profile |
 | F-3 | **Face identity system — self filter** | ✅ | "Who Are You?" setup screen, DeepFace embedding stored in `pixory_identity_v1.json`, per-curation `match_faces` filter removes photos with faces ≠ you. Adding more people is future work |
 | F-4 | **Photo editing tools** | ⏳ | Crop / Adjust / Filters / Draw screen between review and caption |
-| F-5 | **Pick from library escape hatch** | ⏳ | "+" button in review opens full device photo picker filtered to same date range |
-| F-6 | **Drag-and-drop reorder** | ⏳ | Manual reorder of selected photos in review grid |
-| F-7 | **5-tab bottom nav** | ⏳ | Standardise navigation across all screens per prototype |
+| F-5 | **Pick from library escape hatch** | ✅ | "Library" tile in review's More-matches tray opens the device picker; promoted into the carousel |
+| F-6 | **Manual reorder** | ✅ | Review filmstrip with tap-to-focus + ◂▸ reorder on the focused hero (drag-and-drop deferred — needs gesture-handler native rebuild) |
+| F-7 | **Bottom tab nav** | ✅ | Home / center FAB / Profile `TabBar` on the hub + profile per the redesign |
 | F-8 | **Graph API publishing** | ⏳ | Replace `instagrapi` (unofficial) with official Instagram Graph API + S3/R2 CDN for image hosting |
 | F-9 | **Job store persistence** | ⏳ | Backend `_jobs` dict lost on Railway sleep — migrate to SQLite |
 | F-10 | **Cross-post toggle** | ⏳ | Share to Threads / Facebook toggle on publish screen |
 | F-11 | **Peak engagement scheduling** | ⏳ | "Best time to post" prediction surfaced on publish screen |
 | F-12 | **iCloud GPS via dev build** | ⏳ | Native `getAssetLocations` (PHAsset.fetchAssets) activates automatically once H-1 is done |
 | F-13 | **Direct AI fallback** | ⏳ | If backend unreachable, retry via direct Anthropic API call from device |
-| F-14 | **UI/UX design upgrade** | ⏳ | Full visual pass to match Stitch mocks — Plus Jakarta Sans / Inter typography, colour token system, gradient CTAs, glass overlays, spacing grid. Affects all screens |
-| F-15 | **Curation history — drafts + posted** | ⏳ | Every curation gets a name and is saved locally. Unposted = draft (resume from review screen). Posted = view-only archive. Home screen shows both lists. See design notes below |
+| F-14 | **UI/UX design upgrade** | ✅ | Dark Instagram-flavored redesign shipped — amber→coral accent on black, Schibsted Grotesk / Space Mono, token system, gradient CTAs, new Home hub + New Story / Profile / Story Detail / Instagram Connect / Success screens |
+| F-15 | **Curation history — drafts + posted** | ✅ | `pixory_stories_v1.json` (`lib/store/stories.ts`) — each curation saved as draft, promoted to published on post / saved-to-album. Home hub lists recent stories (drafts resume in review, published → Story Detail); Profile grids show all |
+| F-16 | **Gallery-activity nudge** | ⏳ | When a same-day photo *cluster* (`buildActivityClusters`) crosses a threshold, fire a local notification to curate. Hybrid: on-app-open check + opportunistic iOS background fetch (`expo-notifications` + `expo-background-task`). Needs native rebuild (no Expo Go); best-effort iOS timing; deep-links to New Story prefilled to today; once-per-day de-dupe |
+| F-17 | **Stable cover thumbnails** | ⏳ | Persist a ~300px cover JPEG per Story in DocumentDirectory so Home/Profile/Story-Detail thumbnails survive photo-library `file://` URIs going stale. Tiny storage (~30 KB × N, cappable) |
+| F-18 | **Memory map / private vault** | ⏳ | **Product pivot** — open the app to *browse memories*, not 1000 photos. A private, on-device vault ("private Instagram, no posting"); curating + posting become optional actions launched from a memory. Reuses `ActivityCluster` (`buildActivityClusters`) as the memory unit (cover, GPS centroid, date range). Two views over the same memories: a **grid/timeline** front door + a **map tab** (`react-native-maps`, native rebuild, GPS-tagged only). Memory detail → "Make a carousel" pre-fills New Story to that memory's date/place. **Prerequisite: O-14** (whole-library scan needs the metadata cache + pagination, else sluggish). Caveats: native rebuild for the map (no Expo Go), reverse-geocode centroids cached to avoid rate limits, home-screen pivot — sequence after the curate→post flow is stable. See design notes below. Cross-ref: F-16 can deep-link to a memory; complements F-15, H-14 |
 
 ---
 
@@ -219,6 +223,24 @@ Every curation is a named, persistent record stored entirely on-device. Two stat
 ```
 
 **What this replaces:** the current single-session `store` fields (`selectedPhotos`, `captions`, etc.) become the "active curation" slot. On starting a new curation, if there's an active draft, prompt: *"You have an unfinished curation — continue or start fresh?"*
+
+---
+
+### F-18 — Memory map / private vault
+
+Reframes the app: opening Pixory shows **memories**, not a raw 1000-photo library. A memory is an `ActivityCluster` (`lib/photos/clusters.ts`) — already produced by `buildActivityClusters` (30-min / 1.5-km gaps) with a `bestPhoto` cover, `centerLat/centerLon` centroid, and `startTime/endTime`. No new clustering logic needed; the work is aggregating over the *whole* library and presenting it.
+
+**Aggregation layer** (`lib/photos/memories.ts`, new): cluster the full (O-14-cached) library → `Memory[]` = `{ cover, count, startTime, endTime, centerLat, centerLon, placeLabel }`. Reverse-geocode the centroid via `expo-location` `reverseGeocodeAsync`, cached per coarse lat/lon cell to avoid rate limits, → "Shibuya · Apr 3". Build incrementally / paginated so the first screenful paints fast.
+
+**Views (front door):**
+- **Grid/timeline** — memories grouped by trip/time as cards; tap → **Memory detail** (Story-Detail-like view of that cluster's photos) → "Make a carousel" pre-fills New Story to the memory's date/place and runs the existing pipeline.
+- **Map tab** — `react-native-maps` (native dep → rebuild, limited in Expo Go; Apple Maps on iOS). One pin per GPS-tagged memory from the centroid; tap → Memory detail. Non-GPS memories live in the grid only.
+
+**Positioning:** Memories becomes the launch surface; create flow + Profile move into the `TabBar`; the FAB still starts a manual New Story.
+
+**Vault niceties (optional):** favorite/hide memories (small `memories` store or extend `stories`); strictly local, no upload — the privacy framing ("stays on this device, nothing is posted") is the selling point.
+
+**Prerequisite & sequencing:** O-14 first (whole-library scan). It's a home-screen pivot, so land it after the curate→post flow is stable. F-16 (gallery nudge) can then deep-link straight to the relevant memory.
 
 ---
 
