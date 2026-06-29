@@ -51,9 +51,10 @@ export function computePersonaScore(score: BackendPhotoScore, persona: PersonaTy
       break;
     case 'social':
       // Happy faces get their own weight — separate from neutral faces.
-      // Three laughing friends score ~0.45 from faces alone.
+      // Low per-face weight + a 0.45 cap so the COUNT keeps mattering up to ~5
+      // faces: a blurry 5-friend laugh must outscore a sharp 2-face scene.
       base = (
-        Math.min(happy   * 0.30, 0.45) +
+        Math.min(happy   * 0.09, 0.45) +
         Math.min(neutral * 0.10, 0.15) +
         s   * 0.20 +
         bq  * 0.10 +
