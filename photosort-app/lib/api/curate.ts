@@ -14,8 +14,17 @@ export async function curateDevicePhotos(params: {
   /** Base64 JPEG of the user's reference face from face identity setup.
    *  When present, the AI will visually exclude photos where faces appear but the user is absent. */
   userFaceB64?: string;
-  /** Per-photo sidecar metadata to attach objective tags ([CLOSEUP], [GROUP], etc.) to photo labels. */
-  photoMetadata?: Array<{ shot_type?: string; group_size?: string }>;
+  /** Per-photo metadata attached as objective tags on each photo label for the AI. */
+  photoMetadata?: Array<{
+    shot_type?: string;
+    group_size?: string;
+    face_count?: number;
+    happy_face_count?: number;
+    is_user?: boolean;
+    quality?: number;
+    taken_at?: number;
+    dup_group?: string;
+  }>;
   signal?: AbortSignal;
 }): Promise<{
   success: boolean;

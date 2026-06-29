@@ -10,7 +10,7 @@ import { LocalPhoto } from '../store/state';
 
 // Ported from instagram_sorter/app/core/deduplicator.py.
 // imagehash returns a hex string; we compute Hamming distance bit-by-bit.
-function pHashDistance(h1: string, h2: string): number {
+export function pHashDistance(h1?: string, h2?: string): number {
   if (!h1 || !h2 || h1.length !== h2.length) return Infinity;
   let distance = 0;
   for (let i = 0; i < h1.length; i += 2) {

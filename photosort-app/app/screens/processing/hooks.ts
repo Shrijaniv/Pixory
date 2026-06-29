@@ -7,7 +7,7 @@ import { embeddingForEngine, loadIdentity } from '../../../lib/identity';
 import { learningInsight, loadLearningHistory } from '../../../lib/learning';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { clusterSummary, deduplicateBursts, filterByLocation, getPhotos, requestPermission, scoreWithBackend, selectBestPhotos, topCandidates } from '../../../lib/photos';
+import { clusterSummary, deduplicateBursts, filterByLocation, getPhotos, pHashDistance, requestPermission, scoreWithBackend, selectBestPhotos, topCandidates } from '../../../lib/photos';
 import { Caption, LocalPhoto, newStoryId, saveSession, StoryRole, store, upsertStory } from '../../../lib/store';
 import { Step, defaultCaptions } from './types';
 
@@ -37,6 +37,9 @@ export function useProcessingState() {
       // Holds the encoded reference face photo — populated in step 7 if face filter is on,
       // then forwarded to the AI call in step 8 so the AI can also exclude non-matching face photos.
       let userFaceB64: string | undefined;
+      // True once the my-face filter actually runs — lets us tell the AI which
+      // surviving face photos contain the user (non-matches were already removed).
+      let faceFilterApplied = false;
 
       // Show learning insight if enough history exists for this persona
       const learningHistory = await loadLearningHistory();
@@ -164,6 +167,7 @@ export function useProcessingState() {
 
           // Reference embedding for the active engine (deepface/insightface are not interchangeable)
           const refEmbedding = embeddingForEngine(identity, store.faceEngine);
+          if (refEmbedding) faceFilterApplied = true;
           if (!refEmbedding) {
             push(`Face filter skipped — your selfie isn't registered for the ${store.faceEngine} engine. Re-add it in face setup.`);
           }
@@ -315,9 +319,31 @@ export function useProcessingState() {
 
         push(`Sending to ${label} via backend (${store.backendUrl})...`, 75);
         const apiStart = Date.now();
+
+        // Near-duplicate grouping from perceptual hashes — tells the AI which
+        // candidates are visually near-identical so it won't pick two of them.
+        const dupGroup = new Map<string, string>();
+        let dupLabel = 0;
+        for (let a = 0; a < topPhotos.length; a++) {
+          for (let b = a + 1; b < topPhotos.length; b++) {
+            if (pHashDistance(topPhotos[a].phash, topPhotos[b].phash) <= 6) {
+              const uA = topPhotos[a].localUri, uB = topPhotos[b].localUri;
+              const lbl = dupGroup.get(uA) ?? dupGroup.get(uB) ?? String.fromCharCode(65 + dupLabel++);
+              dupGroup.set(uA, lbl);
+              dupGroup.set(uB, lbl);
+            }
+          }
+        }
+
         const photoMetadata = topPhotos.map((p) => ({
-          shot_type: p.shotType,
-          group_size: p.groupSize,
+          shot_type:        p.shotType,
+          group_size:       p.groupSize,
+          face_count:       p.faceCount,
+          happy_face_count: p.happyFaceCount,
+          is_user:          faceFilterApplied && (p.faceCount ?? 0) > 0 ? true : undefined,
+          quality:          p.qualityScore,
+          taken_at:         p.creationTime,
+          dup_group:        dupGroup.get(p.localUri),
         }));
 
         const result = await curateDevicePhotos({
