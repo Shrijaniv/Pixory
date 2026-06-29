@@ -47,6 +47,7 @@ export default function RootLayout() {
         <Stack.Screen name="success" options={{ gestureEnabled: false }} />
         <Stack.Screen name="profile" />
         <Stack.Screen name="story-detail" />
+        <Stack.Screen name="taste" />
         <Stack.Screen name="face-setup" />
       </Stack>
     </View>
