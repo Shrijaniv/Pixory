@@ -7,7 +7,7 @@ import { embeddingForEngine, loadIdentity } from '../../../lib/identity';
 import { learningInsight, loadLearningHistory } from '../../../lib/learning';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { clusterSummary, deduplicateBursts, filterByLocation, getPhotos, pHashDistance, requestPermission, scoreWithBackend, selectBestPhotos, topCandidates } from '../../../lib/photos';
+import { clusterSummary, deduplicateBursts, filterByLocation, getPhotos, orderByBeats, pHashDistance, requestPermission, scoreWithBackend, selectBestPhotos, topCandidates } from '../../../lib/photos';
 import { Caption, LocalPhoto, newStoryId, saveSession, StoryRole, store, upsertStory } from '../../../lib/store';
 import { Step, defaultCaptions } from './types';
 
@@ -382,7 +382,7 @@ export function useProcessingState() {
         const remainder = aiSelected
           .map((p: LocalPhoto) => p.localUri)
           .filter((uri: string) => !orderedUriSet.has(uri));
-        store.selectedPhotos = [...orderedUris, ...remainder];
+        const baseOrder = [...orderedUris, ...remainder];
 
         // Runner-ups: candidates not chosen by AI (from the top pool + device extras)
         store.runnerUpPhotos = [
@@ -397,13 +397,23 @@ export function useProcessingState() {
         // Narrative fields
         store.storyDescription = result.story ?? '';
         store.missingBeat      = result.missing ?? null;
-        // Build URI → role map so the review screen can show badges without index arithmetic
+        // Build URI → role and URI → reason maps so the review screen can show
+        // each photo's beat badge AND the AI's one-line "why it was chosen".
         const roleMap: Record<string, StoryRole> = {};
+        const reasonMap: Record<string, string> = {};
         (result.photo_roles ?? []).forEach((pr: { index: number; role: string; reason: string }) => {
           const photo = topPhotos[pr.index];
-          if (photo) roleMap[photo.localUri] = pr.role as StoryRole;
+          if (photo) {
+            roleMap[photo.localUri] = pr.role as StoryRole;
+            if (pr.reason) reasonMap[photo.localUri] = pr.reason;
+          }
         });
         store.photoRolesByUri = roleMap;
+        store.photoReasonsByUri = reasonMap;
+
+        // Pin hook→first, world→second, closer→last (rest keep AI order) so the
+        // initial render already matches the beats — no reshuffle on the first edit.
+        store.selectedPhotos = orderByBeats(baseOrder, (uri) => roleMap[uri]);
 
         if (result.story) push(`Story: ${result.story}`);
         if (result.missing) push(`⚠ Missing beat: ${result.missing}`);

@@ -205,12 +205,17 @@ export function buildRolePrompt(
     `━━ ORDERING ━━\n` +
     `Ideal swiping order. HOOK first. CLOSER last. Build toward something.\n\n` +
 
+    `━━ REASONS ━━\n` +
+    `For each photo, "reason" must justify WHY it earns its place in the carousel — ` +
+    `the moment, emotion, or quality it captures — not merely describe what it shows. ` +
+    `Write it like you're telling the user why you kept this one.\n\n` +
+
     `Respond with ONLY valid JSON:\n` +
     `{\n` +
     `  "story": "One sentence describing what this carousel tells",\n` +
     `  "selected": [\n` +
-    `    {"index": 0, "role": "hook",  "reason": "most arresting composition"},\n` +
-    `    {"index": 2, "role": "world", "reason": "wide shot establishes place"}\n` +
+    `    {"index": 0, "role": "hook",  "reason": "Stops the scroll — the light and the look pull you straight in"},\n` +
+    `    {"index": 2, "role": "world", "reason": "Sets the scene so the rest of the day has somewhere to live"}\n` +
     `  ],\n` +
     `  "ordering": [0, 2, 1, 3],\n` +
     `  "missing": "No close-up detail shot" or null\n` +

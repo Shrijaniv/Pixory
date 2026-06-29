@@ -71,6 +71,7 @@ export interface AppStore {
   storyDescription: string;
   missingBeat: string | null;
   photoRolesByUri: Record<string, StoryRole>;
+  photoReasonsByUri: Record<string, string>;
   chosenCaption: Caption | null;
   postLocation: string;
   filterByUserFace: boolean;
@@ -103,6 +104,7 @@ export const store: AppStore = {
   storyDescription: '',
   missingBeat: null,
   photoRolesByUri: {},
+  photoReasonsByUri: {},
   chosenCaption: null,
   postLocation: '',
   filterByUserFace: false,
