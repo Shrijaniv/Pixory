@@ -2,7 +2,7 @@
 
 > A privacy-first mobile app that turns an overwhelming camera roll into a story worth sharing.
 
-Pixory helps travelers move from hundreds of trip photos to a cohesive, editable photo story. It filters by date and location, removes near-duplicates, scores photo quality on-device, proposes a balanced selection, and generates caption options—while keeping the user in control of the final result.
+Pixory helps travelers move from hundreds of trip photos to a cohesive, editable photo story. It filters by date and location, removes burst duplicates, scores and balances candidates, and can generate a narrative sequence and captions—while keeping the user in control of the final result.
 
 **Status:** Working private beta. Pixory has been tested by six beta users and is not yet publicly available in the App Store.
 
@@ -21,8 +21,9 @@ Most creative tools either require manual editing or generate new content. Pixor
 ## What it does
 
 - Filters the photo library by date range and optional location
-- Removes burst and near-duplicate photos
-- Scores sharpness, faces, and visual saliency on-device with Apple's Vision framework
+- Removes burst duplicates and computes perceptual hashes for a broader deduplication pass
+- Scores focus, lighting, color, contrast, complexity, faces, expression, shot scale, and group size through an OpenCV + InsightFace sidecar
+- Optionally keeps only face photos containing the registered user through ArcFace identity matching
 - Spreads selections across different activities and moments from a trip
 - Optionally sends a shortlist to Claude or GPT-4o for final curation
 - Suggests multiple editable caption styles
@@ -34,10 +35,11 @@ Most creative tools either require manual editing or generate new content. Pixor
 
 Pixory uses an on-device-first pipeline:
 
-1. Photo-library access, filtering, deduplication, and initial scoring happen on the device.
-2. In AI mode, only the top candidate photos—up to 30—are sent to the configured AI provider through the backend.
-3. Users review and edit every selection before saving or publishing.
-4. AI API keys remain on the backend and are not embedded in the mobile app.
+1. Photo-library access, date/location filtering, burst deduplication, shortlist construction, and preference history live in the mobile app.
+2. Up to 120 resized candidates are sent to the configured backend and Python sidecar for computer-vision scoring.
+3. In AI mode, up to 30 resized shortlisted candidates are sent through the backend to the selected AI provider.
+4. Users review and edit every selection before saving or publishing.
+5. AI API keys remain on the backend and are not embedded in the mobile app.
 
 See [Privacy and Data Flow](docs/PRIVACY.md) for the current prototype architecture and limitations.
 
@@ -48,7 +50,7 @@ Photo library
     ↓
 Date + location filtering
     ↓
-On-device deduplication and Vision scoring
+Burst deduplication and backend vision scoring
     ↓
 Activity-aware shortlist
     ↓
@@ -65,12 +67,12 @@ Save or share
 | --- | --- |
 | Mobile app | React Native, Expo SDK 54, Expo Router, TypeScript |
 | Photo access | Expo Media Library |
-| On-device intelligence | Apple Vision, Swift native Expo module |
-| Selection | Quality scoring, deduplication, activity clustering, preference learning |
+| Computer vision | OpenCV, InsightFace/SCRFD/ArcFace, HSEmotion-ONNX; optional DeepFace comparison engine |
+| Selection | Persona scoring, burst deduplication, time/location clustering, shot balancing, preference learning |
 | AI curation | Claude or GPT-4o vision |
 | Backend | Node.js, TypeScript, Fastify |
 | Image processing | Sharp |
-| Publishing prototype | Python sidecar with Instagrapi |
+| Python sidecar | FastAPI scoring, identity matching, and Instagrapi publishing |
 | Testing | Jest, Vitest |
 
 ## Repository structure
@@ -80,24 +82,23 @@ Pixory/
 ├── photosort-app/       Expo React Native application
 │   ├── app/             Screens and navigation
 │   ├── lib/             Photo pipeline, APIs, state, and preference learning
-│   └── modules/         Native iOS Vision scorer
-├── backend/             Fastify API and publishing sidecar
-├── instagram_sorter/    Archived Python prototype kept for reference
-├── DESIGN.md            Product and technical design
+│   └── modules/         Native PHAsset GPS helper; includes unused legacy scoring code
+├── backend/             Active Fastify API and Python vision/publishing sidecar
+├── instagram_sorter/    Archived prototype; not part of the runtime architecture
+├── DESIGN.md            Current high-level design and data flow
 ├── TASKS.md             Development backlog and implementation notes
 └── start.sh             Local development launcher
 ```
 
-The active implementation lives in `photosort-app/` and `backend/`. The `instagram_sorter/` directory is an earlier prototype and is not the primary backend.
+The active implementation lives in `photosort-app/` and `backend/`. The `instagram_sorter/` directory is archived and is not imported or launched. The Swift module is reached for batched `PHAsset.location` lookup; its older Apple Vision scoring function is not called by the current pipeline.
 
 ## Getting started
 
 ### Prerequisites
 
 - Node.js and npm
-- macOS with Xcode for the full iOS Vision workflow
-- An Expo development build; Expo Go falls back to limited scoring
-- Python 3 for the current Instagram publishing sidecar
+- macOS with Xcode for an iOS development build and batched PHAsset GPS lookup
+- Python 3 and the sidecar dependencies for scoring, face matching, and publishing
 - An Anthropic or OpenAI API key for AI curation
 - Cloudflared only if using the convenience tunnel in `start.sh`
 
@@ -159,7 +160,7 @@ cd photosort-app
 npm run ios
 ```
 
-The native Vision scorer requires an iOS development build. Running in Expo Go uses fallback scoring.
+An iOS development build enables the native batched PHAsset GPS helper. Photo scoring itself uses the configured Python sidecar, not Apple Vision.
 
 ## Tests
 
@@ -175,7 +176,8 @@ npm run typecheck
 ## Current scope and limitations
 
 - Pixory is a private beta, not a production service.
-- The native quality scorer currently targets iOS.
+- Computer-vision scoring and identity matching require the configured Python sidecar; a lightweight file-quality fallback is used if it is unavailable.
+- Perceptual hashes and a near-duplicate helper are implemented, but that second deduplication pass is not yet wired into the active processing flow.
 - AI curation requires a configured backend and provider key.
 - The publishing integration is experimental and can be affected by Instagram platform changes.
 - Photos stored only in iCloud may need to be downloaded before local processing.

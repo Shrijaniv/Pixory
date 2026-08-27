@@ -12,24 +12,29 @@ The mobile application performs the first stage of the workflow locally:
 
 - Requests photo-library access from the operating system
 - Filters assets by the selected date range and optional location
-- Removes bursts and likely duplicates
-- Scores sharpness, faces, and visual saliency
+- Removes burst duplicates and builds the candidate set
 - Builds an initial shortlist
 - Stores local app state and preference-learning signals
 
-The native iOS scorer uses Apple's Vision framework. Expo Go cannot load the custom native module and therefore uses fallback scoring.
+The optional native iOS helper performs batched GPS lookup through `PHAsset.location`. The current scoring pipeline does **not** call the Apple Vision scoring function that remains in the module.
+
+### Computer-vision scoring
+
+Before narrative AI, the app sends resized images for up to 120 candidates to the configured backend. Fastify proxies them to the active Python sidecar, which uses OpenCV, InsightFace, HSEmotion-ONNX, and perceptual hashing to compute quality, face, expression, composition, and duplicate signals. The pHash result is returned, although the broader perceptual-deduplication helper is not yet invoked by the active flow.
+
+The backend URL is configurable, so this may run on the developer's computer or remote infrastructure. It must not be described as on-device unless the deployed sidecar actually runs there.
 
 ### Optional AI curation
 
 AI curation is optional. When selected:
 
-- Pixory narrows the library to a shortlist of up to 30 candidate photos.
+- Pixory narrows the scored candidates to a shortlist of up to 30 photos.
 - The mobile app sends those candidates to the user-configured Pixory backend.
 - The backend resizes the images and sends them to the selected AI provider.
 - The provider returns selection, ordering, and caption suggestions.
 - The user reviews and can change every result.
 
-The full photo library is not uploaded as part of this workflow.
+The full photo library is not uploaded, but the scoring sidecar can receive more photos than the final AI shortlist.
 
 ### Backend configuration
 
@@ -72,4 +77,3 @@ The project should complete, at minimum:
 - Security testing and dependency review
 - An official or otherwise approved publishing path
 - User controls for export and deletion
-
