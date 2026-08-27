@@ -1,288 +1,184 @@
-# Pixory — Design Document
+# Pixory — High-Level Design
 
-## Vision
-A mobile-first iOS app that intelligently curates your best photos from a trip and posts them to Instagram as a **10-photo carousel** — with minimal effort. Set a date range, location, and vibe. The app reads your photo library, scores and deduplicates on-device using the iOS Vision framework, optionally sends a shortlist to an AI backend for final selection and caption writing, and posts the result via a lightweight Node.js backend you control.
+This document describes the **current implementation**. Archived prototypes and unused code are identified explicitly.
 
----
+## 1. Product scope
 
-## User Flow
+Pixory is an iOS-first app for travelers who return from a trip with too many photos. It narrows a date- and location-bounded camera-roll set, removes repeats, scores and balances candidates, optionally turns them into an AI-edited narrative carousel, and lets the user revise, save, or publish the result.
 
-```
-Open app
-  → Set date range + optional location + vibe
-  → Choose: Auto Select / Claude AI / GPT-4o
-  → App requests photo library permission
-  → Geocodes location name → lat/lon (haversine filter)
-  → Fetches ≤300 photos from iOS Photos library
-  → Removes burst duplicates (3-second proximity, keep highest quality)
-  → iOS Vision scoring: sharpness (Laplacian), faces, attention saliency
-  → Classic mode: activity-based windowing → top 10 → default captions
-  → AI mode: top 30 candidates base64-encoded → POST /api/curate_device_photos
-             backend resizes → calls Claude Opus or GPT-4o vision
-             returns {selected_indices, captions[4], notes}
-  → Review grid (tap to toggle; max 10 enforced; runner-up tray for swaps)
-  → Caption editor: pick mood (Wanderlust / Minimal / Story / Playful) + edit + hashtags + Pixory credit toggle
-  → Publish: Instagram session auto-reused if saved; POST /api/publish_from_device
-  → Carousel posted ✓
+## 2. System context
+
+```mermaid
+flowchart LR
+    U[Traveler] --> A[Expo React Native app]
+    A --> P[iOS Photos library]
+    A --> N[Node Fastify API]
+    N --> S[Python FastAPI sidecar]
+    N --> V[GPT-4o or Claude Vision]
+    S --> I[Instagram]
 ```
 
----
+| Active component | Responsibility |
+| --- | --- |
+| `photosort-app/` | Story setup, photo retrieval, local filtering/deduplication, shortlist construction, review, learning, persistence, and save/publish UI |
+| `backend/src/` | Fastify API, image resizing, AI curation and role assignment, and sidecar proxy routes |
+| `backend/publish_sidecar.py` | Computer-vision scoring, face registration/matching, Instagram sessions, location search, and publishing |
+| `backend/face_engines/` | Default InsightFace engine and optional DeepFace comparison engine |
 
-## P0 — Mobile-First MVP
+### Excluded from the active architecture
 
-### Photo Access
-- **Source**: iOS Photos library via `expo-media-library`
-- **Filters**: Date range picker (native iOS date wheel), optional GPS location (haversine distance)
-- **Limit**: Up to 300 photos fetched per run
-- **iCloud**: Photos not downloaded locally are silently skipped; skipped count surfaced in progress UI
+- `instagram_sorter/` is an archived prototype. The current app and backend neither import nor launch it.
+- `photosort-app/modules/vision-scorer/ios/VisionScorerModule.swift` contains an old Apple Vision `scorePhoto` implementation, but the current pipeline never calls it. The module's only reachable use is batched `PHAsset.location` lookup, which uses the Photos framework—not Apple Vision.
 
-### On-Device Quality Scoring — iOS Vision Framework
-Implemented as a native Expo module (`modules/vision-scorer/VisionScorerModule.swift`):
-- **Sharpness**: Laplacian variance on downsampled grayscale pixel data
-- **Face detection**: `VNDetectFaceRectanglesRequest` — bonus score when faces present
-- **Saliency**: `VNGenerateAttentionBasedSaliencyImageRequest` — prefer photos with clear subject
+## 3. Runtime flow
 
-Falls back to resolution-only scoring in Expo Go (no native module; requires dev build for full scoring).
-
-### Deduplication
-Burst removal: photos within a 3-second window → keep highest quality score. Runs before Vision scoring.
-
-### Classic Mode — Activity-Based Photo Selection
-**Algorithm** (`lib/photoLibrary.ts → selectBestPhotos(count)`):
-1. Deduplicate bursts
-2. Group photos into **activity clusters**: consecutive photos with < 45-minute gap = same activity
-3. Select the highest-scoring photo from each activity cluster
-4. Enforce time-spread: divide the date range into 5 equal halves; ensure ≥1 activity per half
-5. Fill remaining slots greedily by activity quality score (ties → 2nd-best photo from top-quality activity)
-6. Return chronologically sorted
-
-Guarantees spread across the trip even when photos cluster in a single day.
-
-### AI Mode — Cloud Curation
-- On-device pipeline narrows to best **30** candidates (dedup + Vision scoring)
-- 30 photos base64-encoded → `POST /api/curate_device_photos`
-- Backend resizes each to 1024×1024 with `sharp`, calls Claude Opus or GPT-4o vision
-- AI selects best **10** and returns 4 caption variants
-- Response cached for the session
-
-Backend endpoint: `POST /api/curate_device_photos`
-```json
-{
-  "photos_b64": ["<base64>", ...],
-  "photo_names": ["IMG_001.jpg", ...],
-  "vibe": "golden hour beach",
-  "max_select": 10,
-  "provider": "claude"
-}
+```mermaid
+flowchart TD
+    A[Story brief] --> B[Fetch up to 300 local photos]
+    B --> C[Optional date and GPS-radius filter]
+    C --> D[Three-second burst deduplication]
+    D --> E[Score up to 120 resized candidates]
+    E --> F[Optional InsightFace identity filter]
+    F --> G[Time and location activity clusters]
+    G --> H[Balanced shortlist of up to 30]
+    H --> I{Curation mode}
+    I -->|Classic| J[Rule-based selection]
+    I -->|AI| K[GPT-4o or Claude story edit]
+    J --> L[Editable review]
+    K --> L
+    L --> M[Caption and save or publish]
 ```
 
-Response:
-```json
-{
-  "success": true,
-  "selected_indices": [0, 3, 7, ...],
-  "captions": [
-    {"mood": "wanderlust", "text": "...", "hashtags": [...]},
-    {"mood": "minimal",    "text": "...", "hashtags": [...]},
-    {"mood": "story",      "text": "...", "hashtags": [...]},
-    {"mood": "playful",    "text": "...", "hashtags": [...]}
-  ],
-  "notes": "..."
-}
-```
+### 3.1 Retrieval and location filtering
 
-### Caption Generation
-- 4 mood variants: **Wanderlust / Minimal / Story / Playful**
-- Generated by Claude/GPT-4o as part of the curation response
-- User selects a mood tab, edits text inline before posting
-- Hashtag toggle (include/exclude)
-- **Pixory credit toggle** (default ON, opt-out): appends `\n\n✨ Created with Pixory` at publish time — not baked into the editor
+The user supplies a date range and may add a place/radius, story prompt, persona, AI/classic mode, and “only photos with me.” The app uses `expo-media-library` to fetch up to 300 photos, reads local metadata and iOS favorites, and skips iCloud-only assets without a local URI.
 
-### Review Grid
-- Masonry grid of selected photos with ①②③ order number badges
-- Header: "X/10 selected"
-- Tap a selected photo to deselect (moves to runner-up tray)
-- **Runner-up tray**: horizontal scroll tray of next-best 20 candidates; tap to promote into main selection
-- **Library escape hatch**: `+` button top-right opens full library picker (filtered to session date range)
-- Max 10 enforced throughout
+For optional GPS filtering it geocodes the place, attempts native batched `PHAsset.location` lookup, falls back to `MediaLibrary.getAssetInfoAsync()`, and applies a Haversine-radius filter. Missing GPS fails open with a user-facing explanation.
 
-### Instagram Publishing
-- Photos encoded as base64 on device
-- `POST /api/publish_from_device` → backend decodes → saves temp files → posts via `instagram-private-api`
-- **Persistent session**: after first login, session cookies serialized and stored in `expo-secure-store`; subsequent posts skip re-login
-- Backend URL configurable in app settings (defaults to `localhost:8000`)
-- Instagram credentials only sent to the user's own backend; never stored in the app
+### 3.2 Deduplication
 
----
+The active flow groups photos taken within three seconds and keeps the highest initial-quality member. The scoring sidecar also computes pHash, and `lib/photos/dedup.ts` contains a second-pass helper using Hamming distance at most 10. That helper is **not currently invoked** by `processing/hooks.ts`, so broader perceptual deduplication is implemented but not active.
 
-## P1 — Cloud Backend & Polish
+### 3.3 Computer-vision scoring
 
-### Backend Hosting on Railway
-Move backend from local Mac to Railway for 24/7 availability:
-```bash
-cd ~/Pixory/backend
-railway login
-railway init --name pixory-backend
-railway up
-# Set in Railway dashboard: ANTHROPIC_API_KEY, OPENAI_API_KEY
-```
-Railway gives a permanent URL like `https://pixory-backend.up.railway.app`.
-User enters this once in the app's "Backend Server" field in Settings.
+`photosort-app/lib/photos/scoring.ts` sends 512-pixel JPEGs in batches of ten to `POST /api/score_photos`, with a default ceiling of 120. Fastify proxies them to `backend/publish_sidecar.py`, which computes:
 
-### Face Identity System ("My Photos" Mode)
-- First-launch prompt: "Who's in your photos?" — scans last 6 months, clusters faces via iOS Vision
-- User names each face cluster (e.g. "Me", "Mom", "Jake"); stored locally in `DocumentDirectory/face-profiles.json`
-- When vibe contains face keywords ("my photos", "solo trip", "with friends"), named faces sent to AI as sample images
-- AI prompt includes: "Prefer photos that prominently feature [name]"
-- Accessible from Profile → Label People
+- Laplacian-variance sharpness;
+- face and happy-face counts;
+- brightness and brightness quality;
+- contrast and saturation;
+- Canny edge-density complexity;
+- shot type (`closeup`, `medium`, `wide`);
+- largest-subject ratio;
+- group size (`none`, `solo`, `duo`, `group`); and
+- perceptual hash.
 
-### Photo Editing
-Between the review grid and caption screen, an optional per-photo editing step:
-- Crop, Adjust (brightness/contrast/saturation), Filters, Draw/annotate
-- Implemented in a new `edit.tsx` screen
+Per-photo failures return neutral scores. If the sidecar is unavailable, the app falls back to its file-size/resolution proxy.
 
-### 5-Tab Bottom Navigation (all screens)
-Home · Search · New (primary) · Curations · Profile
+### 3.4 Face identity
 
----
+The application default is InsightFace; engines are lazy-loaded and cached.
 
-## Tech Stack
+**InsightFace (default)**
 
-| Layer | Technology | Notes |
-|-------|-----------|-------|
-| Mobile UI | React Native (Expo SDK 54) + Expo Router | File-based routing |
-| Photo access | `expo-media-library` | iCloud-only photos silently skipped |
-| On-device scoring | iOS Vision native Expo module (`vision-scorer`) | Sharpness + faces + saliency; no-op in Expo Go |
-| AI curation | Claude `claude-opus-4-5` / GPT-4o `gpt-4o` | Via `/api/curate_device_photos` |
-| Backend | Node.js + TypeScript (Fastify) | `Pixory/backend/`; replaces Python FastAPI |
-| Image resizing | `sharp` | Replaces Pillow |
-| Anthropic SDK | `@anthropic-ai/sdk` | |
-| OpenAI SDK | `openai` | |
-| Instagram | `instagram-private-api` | Replaces instagrapi |
-| State | Module-level singleton `store.ts` | AsyncStorage persistence (P2) |
-| Session storage | `expo-secure-store` | Instagram session cookies |
+- `buffalo_l`, SCRFD detection, ArcFace 512-dimensional normalized embeddings
+- ONNX Runtime CPU provider
+- HSEmotion-ONNX `enet_b0_8_best_afew` for happiness/surprise
+- cosine match threshold 0.35
+- largest reference face; best match among every candidate face
 
----
+**DeepFace (comparison option)**
 
-## Model Split
+- MTCNN detection/emotion and FaceNet 128-dimensional embeddings
+- strict MTCNN → permissive MTCNN → OpenCV registration fallback
+- cosine match threshold 0.45
 
-| Use case | Model | Constant |
-|----------|-------|---------|
-| Vision curation — sending photos, selecting, writing captions | `claude-opus-4-5` | `CLAUDE_VISION_MODEL` |
-| Agent tool-use loop (desktop pipeline) | `claude-sonnet-4-5` | `CLAUDE_AGENT_MODEL` |
+Embeddings are stored locally by engine because the vector spaces are incompatible. In “only photos with me” mode, face-containing photos are matched; non-face photos remain eligible. Matching errors fail open.
 
----
+### 3.5 Persona scoring and learning
 
-## API Key Strategy
+The client maps sidecar signals to different editorial definitions:
 
-| Key | Where stored | How used |
-|-----|-------------|----------|
-| `ANTHROPIC_API_KEY` | `backend/.env` (or Railway env var) | Backend calls Claude on behalf of the app |
-| `OPENAI_API_KEY` | `backend/.env` (or Railway env var) | Backend calls GPT-4o on behalf of the app |
-| Instagram credentials | `expo-secure-store` (session cookie) | Sent to backend at post time; session persisted locally |
+| Persona | Emphasis |
+| --- | --- |
+| Aesthete | Sharpness, palette/color, low clutter |
+| Social Connector | Happy faces, people, close framing |
+| Experience Logger | Lived-in complexity and documentary value |
+| Storyteller | Balanced light and varied moment coverage |
+| Mood Poster | Saturation, light quality, atmospheric wide shots |
 
-The app **never** holds AI API keys. All AI calls proxy through the backend.
+Adding a runner-up records a promoted example; removing an initial selection records a rejected example. After five combined examples, cosine similarity to promoted versus rejected feature averages applies a bounded 0.75–1.25 score multiplier. Learning and the derived taste profile remain local.
 
----
+### 3.6 Clustering and shortlist
 
-## Design System
+A new activity cluster begins when consecutive photos are more than 30 minutes or 1.5 km apart. Candidate selection covers four time windows, represents distinct clusters, and fills remaining slots using persona-specific close-up/medium/wide targets. Storyteller gets a diversity bonus for a cluster's sole representative. AI mode produces up to 30 candidates and 20 runner-ups; classic mode selects ten without cloud narrative AI.
 
-### Colors
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `primary` | `#0061a3` | Buttons, active states, icons |
-| `secondary` | `#b7004f` | Magenta — gradient start |
-| `primary-container` | `#0095f6` | Bright blue |
-| `background` / `surface` | `#faf9f9` | App background |
-| `on-surface` | `#1b1c1c` | Primary text |
-| `on-surface-variant` | `#3f4752` | Muted text |
-| `outline-variant` | `#bfc7d4` | Borders, dividers |
-| Pixory brand gradient | `#b7004f → #0061a3` | Headlines, FAB, brand moments |
-| Instagram gradient | `#f09433 → #e6683c → #dc2743 → #cc2366 → #bc1888` | Publish CTAs |
-| Glass overlay | `rgba(255,255,255,0.4–0.8) + backdrop-blur(12px)` | Floating cards, overlays |
+### 3.7 AI curation
 
-### Typography
-| Style | Font | Size/Line | Weight | Notes |
-|-------|------|-----------|--------|-------|
-| `headline-display` | Plus Jakarta Sans | 24/32px | 700 | −0.02em tracking |
-| `headline-md` | Plus Jakarta Sans | 18/24px | 600 | |
-| `body-lg` | Inter | 16/24px | 400 | |
-| `body-md` | Inter | 14/20px | 400 | |
-| `body-sm` | Inter | 13/18px | 400 | |
-| `label-caps` | Inter | 11/16px | 700 | +0.05em tracking, ALL CAPS |
-| `label-bold` | Inter | 14/20px | 600 | |
+The client sends the shortlist to `POST /api/curate_device_photos`. Fastify resizes inputs and invokes GPT-4o or Claude. Prompts may include the story prompt, persona, favorites, shot/group metadata, optional user reference, and named face profiles.
 
-### Spacing & Radius
-- `stack-sm` 4px · `stack-md` 12px · `stack-lg` 20px
-- `margin-edge` 16px · `gutter-inline` 12px · `touch-target` 44px
-- Border radius: sm=4px · lg=8px · xl=12px · full=9999px
+The model returns selected indices, `hook/world/life/detail/closer` roles and reasons, ordering, a story summary, a missing beat, and four caption variants. After manual edits, `POST /api/assign_roles` can recalculate roles and ordering without excluding submitted photos.
 
----
+### 3.8 Review, persistence, and publishing
 
-## Screens
+The user can add runner-ups, remove selections, and reorder the carousel. Drafts, story history, preferences, identity, and learning history are stored locally. Instagram publishing flows through Fastify to the **active** Python sidecar, which uses Instagrapi and stores sessions under `~/.pixory/sessions`.
 
-| # | Screen | File | Status |
-|---|--------|------|--------|
-| 1 | Splash | `app/index.tsx` (loading state) | ✅ |
-| 2 | Home / Dashboard | `app/index.tsx` | ✅ |
-| 3 | Curation Setup | `app/index.tsx` | ✅ (needs date picker + method picker) |
-| 4 | Processing | `app/processing.tsx` | ✅ |
-| 5 | Review Grid | `app/review.tsx` | ✅ (needs runner-up tray) |
-| 6 | Review Carousel / Edit | `app/edit.tsx` | ❌ (new) |
-| 7 | Caption | `app/caption.tsx` | ✅ (needs mood tabs + credit toggle) |
-| 8 | Connect Instagram | `app/instagram-account.tsx` | ❌ (new) |
-| 9 | Posting Status | `app/publish.tsx` | ✅ |
-| 10 | Post Success | `app/publish.tsx` | ✅ |
-| 11 | Profile / Settings | `app/profile.tsx` | ❌ (new) |
-| 12 | Face Setup | `app/face-setup.tsx` | ❌ (new) |
+## 4. Active API surface
 
----
+| Route | Responsibility |
+| --- | --- |
+| `GET /health` | Backend health |
+| `POST /api/score_photos` | Batch sidecar scoring |
+| `POST /api/register_face` | Engine-specific reference embedding |
+| `POST /api/match_faces` | Candidate identity matching |
+| `POST /api/curate_device_photos` | AI selection, story, ordering, captions |
+| `POST /api/assign_roles` | Roles/order after user edits |
+| `POST /api/search_location` | Instagram location search |
+| `POST /api/account_info` | Connected account details |
+| `POST /api/publish_from_device` | Sidecar carousel publishing |
+| `DELETE /api/session/:username` | Delete persisted Instagram session |
 
-## File Structure
+## 5. Data boundaries
 
-```
-Pixory/
-├── DESIGN.md                          ← this file
-├── backend/                           ← Node.js backend (new)
-│   ├── src/
-│   │   ├── index.ts                  ← Fastify entry point
-│   │   ├── config.ts                 ← env vars + model constants
-│   │   └── routes/
-│   │       ├── curate.ts             ← POST /api/curate_device_photos
-│   │       └── publish.ts            ← POST /api/publish_from_device
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── .env.example
-├── instagram_sorter/                  ← archived Python backend (reference only)
-└── photosort-app/                     ← Expo React Native app
-    ├── app/
-    │   ├── _layout.tsx               ← navigation stack
-    │   ├── index.tsx                 ← Home + Curation Setup
-    │   ├── processing.tsx            ← pipeline progress
-    │   ├── review.tsx                ← photo grid + runner-up tray
-    │   ├── edit.tsx                  ← per-photo editing (P1)
-    │   ├── caption.tsx               ← mood selection + edit
-    │   ├── instagram-account.tsx     ← Instagram login / connected state
-    │   ├── publish.tsx               ← posting status + success
-    │   ├── profile.tsx               ← settings + preferences (P1)
-    │   └── face-setup.tsx            ← face clustering + naming (P1)
-    ├── lib/
-    │   ├── store.ts                  ← app state singleton
-    │   ├── photoLibrary.ts           ← expo-media-library wrapper + scoring
-    │   ├── faceIdentity.ts           ← face profile storage (P1)
-    │   ├── claudeApi.ts              ← direct AI calls (dev/fallback only)
-    │   └── api.ts                    ← backend API client
-    └── modules/
-        └── vision-scorer/            ← iOS Vision native module (Swift)
-```
+| Data | Current location |
+| --- | --- |
+| Library query, story state, identity embeddings, learning history | Mobile device |
+| Up to 120 resized scoring candidates | Configured backend and Python sidecar |
+| Up to 30 resized narrative candidates | Backend and selected AI provider |
+| Optional AI face reference | Sent only with active AI face filtering |
+| Instagram credentials during publish | Backend/sidecar request path |
+| Instagram session | Python sidecar filesystem |
 
----
+The backend URL may be remote. Therefore “only 30 photos leave the device” is not accurate today: cloud AI sees at most the shortlist, but the scoring sidecar can receive up to 120 resized candidates.
 
-## Open Questions / Known Risks
+## 6. Failure behavior
 
-1. **`instagram-private-api` stability**: Instagram periodically blocks scrapers. May need updates or switching to official Graph API (P2).
-2. **iOS Vision native module**: Requires a dev build — not available in Expo Go.
-3. **iCloud photos**: `getAssetInfoAsync` skips photos not downloaded locally. Users need to ensure photos are on-device before curating.
-4. **Carousel limit**: Instagram allows max **10** photos per carousel post. Enforced server-side before publish.
-5. **Base64 payload size**: 30 photos × ~500KB compressed ≈ 15MB per AI curation request. `sharp` resizes to 1024×1024 / 80% quality before sending.
-6. **Railway cold start**: Railway free tier sleeps after inactivity — first request may take ~10s. Show "Waking up backend..." in progress UI.
+- Missing Photos permission stops with Settings guidance.
+- Missing GPS or geocoding failure retains the date-bounded set.
+- Unavailable assets are skipped.
+- Sidecar failure uses file-quality fallback.
+- Face-matching failure skips the constraint rather than failing curation.
+- Individual scoring failure returns neutral metrics.
+- AI and publishing errors are surfaced for recovery.
+
+## 7. Production gaps
+
+- Add backend authentication, TLS, restricted CORS, request limits, and rate limiting.
+- Define image retention, deletion, and telemetry-redaction policy.
+- Protect or replace filesystem-backed Instagram sessions.
+- Benchmark face-matching errors across lighting, occlusion, skin tones, age, and group size.
+- Validate model and publishing-library licenses/platform compliance.
+- Remove or isolate the unused native Apple Vision scorer.
+- Replace the hard-coded development backend URL with environment configuration.
+- Add mobile-to-sidecar end-to-end tests.
+- Wire and validate the existing pHash deduplication pass before describing near-duplicate removal as active behavior.
+
+## 8. Sources of truth
+
+- Pipeline orchestration: `photosort-app/app/screens/processing/hooks.ts`
+- Retrieval, scoring, deduplication, clustering, selection: `photosort-app/lib/photos/`
+- Personalization and identity: `photosort-app/lib/learning/`, `photosort-app/lib/identity/`
+- API and AI curation: `backend/src/routes/`, `backend/src/services/`
+- Active scoring, identity, and publishing sidecar: `backend/publish_sidecar.py`, `backend/face_engines/`
+
+Do not use `instagram_sorter/` or the unused native `scorePhoto` export to infer current product behavior.

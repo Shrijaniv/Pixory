@@ -7,9 +7,10 @@ Pixory is currently a founder-led private-beta project. Contributions that impro
 - `photosort-app/app/`: screens and navigation
 - `photosort-app/lib/photos/`: fetching, deduplication, scoring, clustering, and selection
 - `photosort-app/lib/learning/`: preference-learning logic
-- `photosort-app/modules/vision-scorer/`: native iOS Vision integration
-- `backend/src/`: AI curation and publishing API
-- `instagram_sorter/`: archived prototype; avoid adding new primary functionality here
+- `photosort-app/modules/vision-scorer/`: native PHAsset GPS helper; its Apple Vision scorer is unused legacy code
+- `backend/src/`: active Fastify API and AI curation layer
+- `backend/publish_sidecar.py` and `backend/face_engines/`: active scoring, identity, and publishing sidecar
+- `instagram_sorter/`: archived prototype; do not add or infer current functionality here
 
 ## Local setup
 
@@ -17,7 +18,7 @@ Follow the root [README](README.md) for installation and run instructions.
 
 ## Before opening a change
 
-1. Keep photo processing on-device unless the feature clearly requires cloud processing.
+1. Minimize photo transfer and document whether processing occurs on-device, on Pixory infrastructure, or at an AI provider.
 2. Never commit API keys, account sessions, user photos, face profiles, or generated caches.
 3. Add or update tests for behavior changes.
 4. Keep the user in control of AI-generated selections and captions.
@@ -42,7 +43,7 @@ npm run typecheck
 npm run build
 ```
 
-For changes to the native Vision module, also verify the app in an iOS development build; Expo Go only exercises fallback behavior.
+For changes to the native PHAsset helper, verify GPS metadata retrieval in an iOS development build.
 
 ## Pull requests
 
