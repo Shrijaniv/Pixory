@@ -19,7 +19,7 @@ function formatTaken(ms: number): string {
 }
 
 /** Build the one-line objective-metadata label that follows each photo image. */
-function buildPhotoLabel(i: number, name: string | undefined, meta: PhotoMetadata | undefined, favorited: boolean): string {
+export function buildPhotoLabel(i: number, name: string | undefined, meta: PhotoMetadata | undefined, favorited: boolean): string {
   const parts: string[] = [];
   if (meta?.shot_type) parts.push(meta.shot_type);
   if (meta?.face_count != null && meta.face_count > 0) {
@@ -28,7 +28,14 @@ function buildPhotoLabel(i: number, name: string | undefined, meta: PhotoMetadat
     parts.push(people);
   }
   if (meta?.is_user) parts.push("you're in it");
-  if (meta?.quality != null) parts.push(`quality ${Math.round(meta.quality * 100)}/100`);
+  // The score must be a 0-1 composite. It was previously the raw byte proxy,
+  // which rendered as "quality 250000000/100" on every photo while the system
+  // prompt told the model to rank on that number (audit L3). Normalisation
+  // landed in the app; this clamp makes a regression drop the tag rather than
+  // feed the model nonsense.
+  if (meta?.quality != null && Number.isFinite(meta.quality) && meta.quality >= 0 && meta.quality <= 1) {
+    parts.push(`quality ${Math.round(meta.quality * 100)}/100`);
+  }
   if (meta?.taken_at) parts.push(formatTaken(meta.taken_at));
   if (meta?.dup_group) parts.push(`near-dup ${meta.dup_group}`);
   if (favorited) parts.push('♥ favorited');
