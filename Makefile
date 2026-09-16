@@ -1,7 +1,7 @@
 # Pixory — repo-level test entry points.
 # Per-project commands live in photosort-app/package.json and backend/package.json.
 
-.PHONY: test test-app test-backend test-sidecar coverage typecheck install-sidecar
+.PHONY: test test-app test-backend test-sidecar test-sidecar-models coverage typecheck install-sidecar
 
 test: test-app test-backend test-sidecar ## Run every suite
 
@@ -13,6 +13,9 @@ test-backend:
 
 test-sidecar:
 	cd backend && python3 -m pytest
+
+test-sidecar-models: ## Run the tests that need real model weights (not run in CI)
+	cd backend && python3 -m pytest -m models --cov-fail-under=0
 
 coverage: ## Run every suite with coverage gates enforced
 	cd photosort-app && npm run test:coverage
