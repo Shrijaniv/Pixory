@@ -66,6 +66,13 @@ export async function curateDevicePhotos(params: {
   }
 }
 
+/**
+ * Budget for the review screen's re-label call. Shorter than the initial
+ * curation's 120s: this runs on at most 10 already-selected photos and fires
+ * on every edit, so a slow response is worse than no response (audit O6).
+ */
+export const ASSIGN_ROLES_TIMEOUT_MS = 60_000;
+
 export async function assignRoles(params: {
   photosBase64: string[];
   photoNames: string[];
@@ -75,6 +82,7 @@ export async function assignRoles(params: {
   provider: 'claude' | 'openai';
   backendUrl: string;
   signal?: AbortSignal;
+  timeoutMs?: number;
 }): Promise<{
   success: boolean;
   photo_roles?: Array<{ index: number; role: string; reason: string }>;
@@ -83,18 +91,33 @@ export async function assignRoles(params: {
   missing?: string | null;
   error?: string;
 }> {
-  const res = await fetch(`${params.backendUrl}/api/assign_roles`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      photos_b64:  params.photosBase64,
-      photo_names: params.photoNames,
-      vibe:        params.vibe,
-      story:       params.story,
-      persona:     params.persona,
-      provider:    params.provider,
-    }),
-    signal: params.signal,
-  });
-  return res.json();
+  // Own timeout, linked to the caller's signal. Without this a dropped backend
+  // leaves the review screen spinning "Reorganizing the story arc…" forever.
+  const controller = new AbortController();
+  const onCallerAbort = () => controller.abort();
+  if (params.signal) {
+    if (params.signal.aborted) controller.abort();
+    else params.signal.addEventListener('abort', onCallerAbort);
+  }
+  const timer = setTimeout(() => controller.abort(), params.timeoutMs ?? ASSIGN_ROLES_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(`${params.backendUrl}/api/assign_roles`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        photos_b64:  params.photosBase64,
+        photo_names: params.photoNames,
+        vibe:        params.vibe,
+        story:       params.story,
+        persona:     params.persona,
+        provider:    params.provider,
+      }),
+      signal: controller.signal,
+    });
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+    params.signal?.removeEventListener('abort', onCallerAbort);
+  }
 }
