@@ -145,7 +145,21 @@ export function useProcessingState() {
       // 6. Backend scoring (OpenCV sharpness + face detection via Python sidecar)
       // Sends top 120 candidates as 512px thumbnails to /api/score_photos.
       // Falls back silently to file-size ranking if the backend is unreachable.
-      let visionScored = await scoreWithBackend(dedupedPhotos, store.backendUrl, { candidateLimit: 120, onProgress: push, contentMix: store.contentMix, persona: store.persona, faceEngine: store.faceEngine });
+      const scoring = await scoreWithBackend(dedupedPhotos, store.backendUrl, {
+        candidateLimit: 120,
+        onProgress: push,
+        contentMix: store.contentMix,
+        persona: store.persona,
+        faceEngine: store.faceEngine,
+        signal: abortRef.current.signal,
+      });
+      let visionScored = scoring.photos;
+      if (!scoring.scored) {
+        // Scoring failed. Continue on the byte-size proxy, but say so — the
+        // old code degraded silently and, with the face filter on, dropped
+        // every photo as "not face-checked" (audit F2).
+        push('⚠ Continuing without vision scoring — selection quality will be reduced. Check the backend and retry for better results.');
+      }
       if (cancelled.current) return;
 
       // 7. Face identity filter (optional — only when user has set up identity + toggle is on)
@@ -171,8 +185,12 @@ export function useProcessingState() {
           if (!refEmbedding) {
             push(`Face filter skipped — your selfie isn't registered for the ${store.faceEngine} engine. Re-add it in face setup.`);
           }
-          // Only check photos where face_count > 0 — landscapes/food always pass
-          const facePhotos = refEmbedding ? visionScored.filter((p) => (p.faceCount ?? 0) > 0) : [];
+          // Only check photos where face_count > 0 — landscapes/food always pass.
+          // Requires scoring to have succeeded; without it faceCount is undefined
+          // for every photo and there is nothing to match against.
+          const facePhotos = refEmbedding && scoring.scored
+            ? visionScored.filter((p) => (p.faceCount ?? 0) > 0)
+            : [];
           if (refEmbedding && facePhotos.length > 0) {
             push(`Checking ${facePhotos.length} photo${facePhotos.length !== 1 ? 's' : ''} for your face...`);
             try {
@@ -216,14 +234,20 @@ export function useProcessingState() {
           }
         }
 
-        // Also drop photos with no face data (ranked below top 120, never sent to sidecar)
-        // — we can't verify whether the user appears in them, so exclude from both
-        // selection and runner-ups to prevent other people's faces slipping through.
-        const beforeUnscoredFilter = visionScored.length;
-        visionScored = visionScored.filter((p) => p.faceCount !== undefined);
-        const droppedUnscored = beforeUnscoredFilter - visionScored.length;
-        if (droppedUnscored > 0) {
-          push(`Skipped ${droppedUnscored} photo${droppedUnscored !== 1 ? 's' : ''} — not face-checked (low quality ranking)`);
+        // Drop photos with no face data (ranked below the top 120, so never sent
+        // to the sidecar) — we can't verify whether the user appears in them.
+        //
+        // ONLY safe when scoring actually succeeded. If it failed, no photo has
+        // a face count and this filter empties the entire curation (audit F2).
+        if (scoring.scored) {
+          const beforeUnscoredFilter = visionScored.length;
+          visionScored = visionScored.filter((p) => p.faceCount !== undefined);
+          const droppedUnscored = beforeUnscoredFilter - visionScored.length;
+          if (droppedUnscored > 0) {
+            push(`Skipped ${droppedUnscored} photo${droppedUnscored !== 1 ? 's' : ''} — not face-checked (ranked below the scoring cut-off)`);
+          }
+        } else {
+          push('⚠ My-face filter skipped — photos could not be scored, so no face data is available. Every photo was kept.');
         }
       }
       if (cancelled.current) return;
