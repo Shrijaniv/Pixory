@@ -20,15 +20,6 @@
     "testMatch": [
       "**/__tests__/**/*.test.ts"
     ],
-    "moduleNameMapper": {
-      "^expo-image-manipulator$": "<rootDir>/__mocks__/expo-image-manipulator.js",
-      "^expo-file-system(/legacy)?$": "<rootDir>/__mocks__/expo-file-system.js",
-      "^expo-media-library$": "<rootDir>/__mocks__/expo-media-library.js",
-      "^expo-location$": "<rootDir>/__mocks__/expo-location.js",
-      "^expo-router$": "<rootDir>/__mocks__/expo-router.js",
-      "^expo-image-picker$": "<rootDir>/__mocks__/expo-image-picker.js",
-      "^expo-secure-store$": "<rootDir>/__mocks__/expo-secure-store.js"
-    },
     "collectCoverageFrom": [
       "lib/**/*.ts",
       "!lib/**/__tests__/**"
@@ -40,12 +31,15 @@
     ],
     "coverageThreshold": {
       "global": {
-        "statements": 57,
-        "branches": 47,
-        "functions": 62,
-        "lines": 57
+        "statements": 64,
+        "branches": 55,
+        "functions": 68,
+        "lines": 63
       }
-    }
+    },
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ]
   },
   "dependencies": {
     "@expo-google-fonts/schibsted-grotesk": "^0.4.2",

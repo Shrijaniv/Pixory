@@ -41,7 +41,13 @@ export interface LocalPhoto {
 
 export type ContentMix = 'people' | 'balanced' | 'places';
 
-/** Which on-device face model the sidecar uses (experimental A/B). */
+/**
+ * Which on-device face model the sidecar uses.
+ *
+ * Pinned to 'insightface' on main. The A/B toggle lives on a branch; the
+ * value is never restored from disk, so a preference saved by an older build
+ * cannot route a user back to the DeepFace path (audit F3).
+ */
 export type FaceEngine = 'deepface' | 'insightface';
 
 export type PersonaType =

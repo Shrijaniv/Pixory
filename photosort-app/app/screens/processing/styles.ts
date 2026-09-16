@@ -34,6 +34,18 @@ export const styles = StyleSheet.create({
   heading: { ...Typography.title, color: Colors.text, marginTop: Spacing.lg },
   subtitle: { ...Typography.bodyMd, color: Colors.textFaint, textAlign: 'center', maxWidth: 280 },
 
+  staleBox: {
+    marginHorizontal: Spacing.xl,
+    marginBottom: Spacing.lg,
+    padding: Spacing.lg,
+    borderRadius: Radius.card,
+    backgroundColor: Colors.draftWash,
+    borderWidth: 1,
+    borderColor: Colors.draft,
+    gap: Spacing.sm,
+  },
+  staleTitle: { ...Typography.title, fontSize: 15, color: Colors.draft },
+  staleMsg: { ...Typography.bodyMd, color: Colors.textMuted, lineHeight: 19 },
   errorBox: {
     margin: Spacing.xl,
     padding: Spacing.xl,

@@ -36,7 +36,12 @@ export async function loadPersistedPrefs(): Promise<void> {
     if (saved.contentMix)  store.contentMix  = saved.contentMix as ContentMix;
     if (saved.persona)     store.persona     = saved.persona as PersonaType;
     if (saved.filterByUserFace !== undefined) store.filterByUserFace = saved.filterByUserFace;
-    if (saved.faceEngine !== undefined)       store.faceEngine       = saved.faceEngine;
+    // `faceEngine` is deliberately NOT restored (audit F3). Commit c3afb7b moved
+    // main to InsightFace-only and removed the engine toggle from the UI, but this
+    // function kept honouring a saved value — so a device that once selected
+    // DeepFace stayed on it with no way back. That engine counts a face on every
+    // image (enforce_detection=False, confidence unchecked), turning every
+    // landscape into a solo portrait. The field is dropped on the next write.
     if (saved.profilePhotoUri !== undefined)  store.profilePhotoUri  = saved.profilePhotoUri;
     if (saved.displayName !== undefined)      store.displayName      = saved.displayName;
     if (saved.handle !== undefined)           store.handle           = saved.handle;
@@ -46,12 +51,12 @@ export async function loadPersistedPrefs(): Promise<void> {
 export async function persistPrefs(): Promise<void> {
   try {
     await FileSystem.writeAsStringAsync(PREFS_FILE, JSON.stringify({
+      // faceEngine is intentionally absent — see loadPersistedPrefs (audit F3).
       backendUrl:        store.backendUrl,
       method:            store.method,
       contentMix:        store.contentMix,
       persona:           store.persona,
       filterByUserFace:  store.filterByUserFace,
-      faceEngine:        store.faceEngine,
       profilePhotoUri:   store.profilePhotoUri,
       displayName:       store.displayName,
       handle:            store.handle,

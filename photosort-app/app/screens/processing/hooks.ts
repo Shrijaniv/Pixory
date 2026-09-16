@@ -3,7 +3,7 @@ import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, ScrollView } from 'react-native';
 import { curateDevicePhotos, matchFaces } from '../../../lib/api';
-import { embeddingForEngine, loadIdentity } from '../../../lib/identity';
+import { embeddingForEngine, isIdentityStale, loadIdentity } from '../../../lib/identity';
 import { learningInsight, loadLearningHistory } from '../../../lib/learning';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -15,6 +15,8 @@ export function useProcessingState() {
   const [steps, setSteps] = useState<Step[]>([]);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
+  /** Set when a saved selfie predates the current face model (audit F4). */
+  const [staleIdentity, setStaleIdentity] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const cancelled = useRef(false);
@@ -179,11 +181,18 @@ export function useProcessingState() {
             // Non-fatal — AI will still run without the reference face
           }
 
-          // Reference embedding for the active engine (deepface/insightface are not interchangeable)
+          // Reference embedding for the active engine. DeepFace produces 128-d
+          // Facenet vectors and InsightFace 512-d ArcFace ones; a cosine
+          // similarity between them is meaningless, so a selfie registered
+          // under the old engine cannot be reused.
           const refEmbedding = embeddingForEngine(identity, store.faceEngine);
           if (refEmbedding) faceFilterApplied = true;
-          if (!refEmbedding) {
-            push(`Face filter skipped — your selfie isn't registered for the ${store.faceEngine} engine. Re-add it in face setup.`);
+          if (isIdentityStale(identity, store.faceEngine)) {
+            // Previously a single log line, so the filter silently did nothing
+            // and the user saw other people's photos survive (audit F4).
+            // Surface it as an action the user can actually take.
+            setStaleIdentity(true);
+            push('⚠ Your saved selfie was registered with an older face model and cannot be used. Open Profile → My-face filter and add it again. This run keeps every photo.');
           }
           // Only check photos where face_count > 0 — landscapes/food always pass.
           // Requires scoring to have succeeded; without it faceCount is undefined
@@ -498,5 +507,5 @@ export function useProcessingState() {
     store.method === 'openai' ? 'GPT-4o' :
     'Auto Select';
 
-  return { steps, error, progress, scrollRef, pulseAnim, handleCancel, methodLabel };
+  return { steps, error, progress, scrollRef, pulseAnim, handleCancel, methodLabel, staleIdentity };
 }
