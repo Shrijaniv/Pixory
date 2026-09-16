@@ -15,10 +15,10 @@ export default defineConfig({
       // Baseline pinned at today's measured numbers. Raised to 100 by #14;
       // every PR in between may only move these up.
       thresholds: {
-        statements: 18,
-        branches: 25,
-        functions: 21,
-        lines: 18,
+        statements: 25,
+        branches: 36,
+        functions: 26,
+        lines: 23,
       },
     },
   },
