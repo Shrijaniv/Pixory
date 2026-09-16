@@ -14,3 +14,8 @@ tf-keras
 insightface
 onnxruntime
 hsemotion-onnx
+
+# Test harness (dev only — not needed at runtime)
+pytest
+pytest-cov
+httpx
