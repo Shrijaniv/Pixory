@@ -3,7 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { assignRoles } from '../../../lib/api';
-import { recordOutcome } from '../../../lib/learning';
+import { recordOutcomes, resolveOutcomes } from '../../../lib/learning';
 import { orderByBeats } from '../../../lib/photos';
 import { LocalPhoto, StoryRole, store } from '../../../lib/store';
 import { MAX_CAROUSEL, SelectedItem } from './types';
@@ -160,19 +160,16 @@ export function useReviewState() {
     const photo = store.localPhotos.find((p) => p.localUri === uri);
     if (photo) {
       setRunnerUps((prev) => [photo, ...prev.filter((p) => p.localUri !== uri)]);
-      // Record as a rejection only if the algorithm/AI originally selected this photo
-      if (initialSelectionRef.current.has(uri)) {
-        recordOutcome(photo, 'rejected', store.persona);
-      }
     }
+    // Nothing is learned here. Outcomes are derived from the FINAL selection in
+    // handleNext, so toggling a photo any number of times records once (L5).
   }
 
   function promote(photo: LocalPhoto) {
     if (selected.length >= MAX_CAROUSEL) { showToast('Deselect a photo above first (max 10)'); return; }
     setSelected((prev) => [...prev, { localUri: photo.localUri, order: prev.length + 1 }]);
     setRunnerUps((prev) => prev.filter((p) => p.localUri !== photo.localUri));
-    // Record as a promotion — user explicitly chose something the algorithm deprioritised
-    recordOutcome(photo, 'promoted', store.persona);
+    // See deselect(): learning is resolved from the final selection, not here.
   }
 
   /** Apply a new order from the draggable filmstrip (does NOT trigger AI re-label). */
@@ -228,16 +225,19 @@ export function useReviewState() {
       return true;
     });
 
-    // Learn from the KEPT picks: photos the AI selected and the user accepted
-    // (left in the carousel) are a strong approval signal. Tray-added photos were
-    // already recorded by promote(); removed ones by deselect(). Record once per visit.
+    // Learn from the final selection compared with what was proposed. Doing it
+    // here, once, rather than on each edit is what makes the result independent
+    // of how much the user fiddled (audit L1 and L5). Photos with no sidecar
+    // measurements are skipped rather than recorded with defaults (L4).
     if (!recordedKeptRef.current) {
       recordedKeptRef.current = true;
-      for (const item of ordered) {
-        if (!initialSelectionRef.current.has(item.localUri)) continue; // skip user-added (already recorded)
-        const photo = store.localPhotos.find((p) => p.localUri === item.localUri);
-        if (photo) recordOutcome(photo, 'promoted', store.persona);
-      }
+      const outcomes = resolveOutcomes(
+        store.selectedPhotos,
+        initialSelectionRef.current,
+        (uri) => store.localPhotos.find((p) => p.localUri === uri),
+      );
+      // Fire-and-forget: a learning failure must never block the flow.
+      recordOutcomes(outcomes, store.persona);
     }
 
     router.push('/caption');
