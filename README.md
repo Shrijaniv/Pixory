@@ -14,9 +14,7 @@ Pixory helps travelers move from hundreds of trip photos to a cohesive, editable
 
 ## Demo
 
-<video src="https://github.com/Shrijaniv/Pixory/raw/main/demo/pixory-demo.mp4" controls width="100%"></video>
-
-If the video does not play inline, [watch the demo here](demo/pixory-demo.mp4).
+▶ [**Watch the demo**](https://github.com/Shrijaniv/Pixory/blob/main/demo/pixory-demo.mp4) — opens in GitHub's built-in video player.
 
 ## Why Pixory?
 
