@@ -12,6 +12,12 @@ Pixory helps travelers move from hundreds of trip photos to a cohesive, editable
   <img src="photosort-app/design_handoff_pixory_redesign/screenshots/05-screen.png" width="31%" alt="Pixory ready-to-share screen" />
 </p>
 
+## Demo
+
+<video src="https://github.com/Shrijaniv/Pixory/raw/main/demo/pixory-demo.mp4" controls width="100%"></video>
+
+If the video does not play inline, [watch the demo here](demo/pixory-demo.mp4).
+
 ## Why Pixory?
 
 Trips often leave people with hundreds of photos and a surprisingly exhausting final task: compare similar shots, find the meaningful moments, build a balanced carousel, and write a caption. Many people postpone the process until the moment has passed—or never share the photos at all.
