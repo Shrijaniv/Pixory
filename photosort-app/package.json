@@ -8,7 +8,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "jest": {
     "preset": "jest-expo",
@@ -19,12 +20,26 @@
     "testMatch": [
       "**/__tests__/**/*.test.ts"
     ],
-    "moduleNameMapper": {
-      "^expo-image-manipulator$": "<rootDir>/__mocks__/expo-image-manipulator.js",
-      "^expo-file-system(/legacy)?$": "<rootDir>/__mocks__/expo-file-system.js",
-      "^expo-media-library$": "<rootDir>/__mocks__/expo-media-library.js",
-      "^expo-location$": "<rootDir>/__mocks__/expo-location.js"
-    }
+    "collectCoverageFrom": [
+      "lib/**/*.ts",
+      "!lib/**/__tests__/**"
+    ],
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "json-summary"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 72,
+        "branches": 65,
+        "functions": 76,
+        "lines": 71
+      }
+    },
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ]
   },
   "dependencies": {
     "@expo-google-fonts/schibsted-grotesk": "^0.4.2",

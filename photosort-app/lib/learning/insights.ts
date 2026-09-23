@@ -1,11 +1,21 @@
 /**
- * Taste profile — turns the per-persona learning averages (pixory_learning_v1.json)
- * into a user-facing "here's your style" summary. Pure/local; no backend.
+ * Taste profile — turns the per-persona learning averages into a user-facing
+ * "here's your style" summary. Pure and local; no backend.
  *
- * The signal lives in the DELTA between what the user promoted vs rejected:
- * a photo trait they consistently pick OVER what they skip is a real preference.
+ * The signal lives in the DELTA between what the user approves of and what they
+ * remove: a trait they consistently pick OVER what they skip is a real
+ * preference. "Approves of" is kept plus promoted, weighted — see storage.ts
+ * for why those two carry different weights.
  */
-import type { LearningFeatures, LearningHistory, PersonaLearning } from './storage';
+import {
+  approvedStats,
+  decisiveCount,
+  MIN_DECISIVE_EXAMPLES,
+  type LearningFeatures,
+  type LearningHistory,
+  type PersonaLearning,
+  type WeightedStats,
+} from './storage';
 
 export interface TasteTrait {
   key: string;
@@ -15,16 +25,21 @@ export interface TasteTrait {
 }
 
 export interface TasteProfile {
-  ready: boolean;        // ≥5 combined examples (matches learningInsight gate)
-  sampleCount: number;   // promoted + rejected across all personas
+  /** True once enough decisive edits exist (matches the learningInsight gate). */
+  ready: boolean;
+  /** Decisive edits — promoted + rejected — across all personas. */
+  sampleCount: number;
+  /** Photos the user approved of, kept and promoted together. */
   promotedCount: number;
-  remaining: number;     // examples still needed to unlock (0 when ready)
-  traits: TasteTrait[];  // 6 dims, sorted by |lean| desc
-  dominantGroup: string; // friendly label, e.g. "solo shots"
-  narrative: string;     // human paragraph built from the top traits
+  /** Decisive edits still needed to unlock (0 when ready). */
+  remaining: number;
+  /** 6 dimensions, sorted by |lean| descending. */
+  traits: TasteTrait[];
+  /** Friendly label, e.g. "solo shots". */
+  dominantGroup: string;
+  /** Human paragraph built from the top traits. */
+  narrative: string;
 }
-
-const MIN_SAMPLES = 5;
 
 /** Each visual dimension → friendly label, source feature, and direction. */
 const SPECS: { key: string; label: string; feat: keyof LearningFeatures; invert: boolean; scale: number }[] = [
@@ -38,14 +53,15 @@ const SPECS: { key: string; label: string; feat: keyof LearningFeatures; invert:
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
-function weightedAvg(history: LearningHistory, pick: (p: PersonaLearning) => { avg: LearningFeatures; count: number }) {
+/** Combine one bucket across every persona, weighting by accumulated weight. */
+function weightedAvg(history: LearningHistory, pick: (p: PersonaLearning) => WeightedStats) {
   const sum: LearningFeatures = { sharpness: 0, faceCount: 0, brightnessQuality: 0, contrast: 0, saturation: 0, complexity: 0 };
   let total = 0;
   for (const p of Object.values(history)) {
-    const { avg, count } = pick(p);
-    if (count <= 0) continue;
-    total += count;
-    (Object.keys(sum) as (keyof LearningFeatures)[]).forEach((k) => { sum[k] += avg[k] * count; });
+    const { avg, weight } = pick(p);
+    if (weight <= 0) continue;
+    total += weight;
+    (Object.keys(sum) as (keyof LearningFeatures)[]).forEach((k) => { sum[k] += avg[k] * weight; });
   }
   if (total > 0) (Object.keys(sum) as (keyof LearningFeatures)[]).forEach((k) => { sum[k] /= total; });
   return sum;
@@ -53,12 +69,14 @@ function weightedAvg(history: LearningHistory, pick: (p: PersonaLearning) => { a
 
 export function computeTasteProfile(history: LearningHistory): TasteProfile {
   const personas = Object.values(history);
-  const promotedCount = personas.reduce((s, p) => s + p.promotedCount, 0);
-  const rejectedCount = personas.reduce((s, p) => s + p.rejectedCount, 0);
-  const sampleCount = promotedCount + rejectedCount;
+  // Readiness counts only decisive edits. Kept photos are shown in
+  // promotedCount because they are real approvals, but a user who edits
+  // nothing must not unlock a taste profile built from the AI's own picks.
+  const sampleCount = personas.reduce((s, p) => s + decisiveCount(p), 0);
+  const promotedCount = personas.reduce((s, p) => s + approvedStats(p).count, 0);
 
-  const promotedAvg = weightedAvg(history, (p) => ({ avg: p.promotedAvg, count: p.promotedCount }));
-  const rejectedAvg = weightedAvg(history, (p) => ({ avg: p.rejectedAvg, count: p.rejectedCount }));
+  const promotedAvg = weightedAvg(history, (p) => approvedStats(p));
+  const rejectedAvg = weightedAvg(history, (p) => p.rejected);
 
   const traits: TasteTrait[] = SPECS.map((s) => {
     const delta = promotedAvg[s.feat] - rejectedAvg[s.feat];
@@ -81,14 +99,14 @@ export function computeTasteProfile(history: LearningHistory): TasteProfile {
   const dominantKey = (Object.keys(g) as (keyof typeof g)[]).reduce((best, k) => (g[k] > g[best] ? k : best), 'noFace');
   const dominantGroup = groupLabels[dominantKey];
 
-  const ready = sampleCount >= MIN_SAMPLES;
+  const ready = sampleCount >= MIN_DECISIVE_EXAMPLES;
   const narrative = ready ? buildNarrative(traits, dominantGroup) : '';
 
   return {
     ready,
     sampleCount,
     promotedCount,
-    remaining: Math.max(0, MIN_SAMPLES - sampleCount),
+    remaining: Math.max(0, MIN_DECISIVE_EXAMPLES - sampleCount),
     traits,
     dominantGroup,
     narrative,

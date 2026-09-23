@@ -131,13 +131,16 @@ export function buildSystemPrompt(
     `• DETAIL (1–2): Close-ups that reward the person who keeps swiping.\n` +
     `• CLOSER (exactly 1): Emotional punctuation of the last slide.\n\n` +
 
-    `━━ COMPOSITION DIVERSITY ━━\n` +
-    `Photos are tagged with objective sidecar-computed attributes: [CLOSEUP], [MEDIUM], or [WIDE] (shot type) ` +
-    `and [SOLO], [DUO], or [GROUP] (number of people). Use these to build visual variety:\n` +
-    `• Do NOT select 3 or more [CLOSEUP] or [WIDE] shots in sequence — alternate shot scales\n` +
-    `• Aim for: at least 1 [WIDE] establishing shot (ideal for HOOK or WORLD), at least 1 [CLOSEUP] detail\n` +
-    `• [GROUP] shots work well for LIFE and WORLD beats; [SOLO] or [CLOSEUP] suit HOOK and CLOSER\n` +
-    `• If the pool has no [WIDE] shots at all, note it in "missing"\n\n` +
+    `━━ PHOTO METADATA ━━\n` +
+    `Each photo is followed by objective, on-device-measured attributes (after an em dash, separated by "·"). Use them — don't just guess from pixels:\n` +
+    `• shot type (closeup / medium / wide) — alternate scales; never 3+ of the same in a row; include ≥1 wide establishing shot and ≥1 closeup detail\n` +
+    `• people count + how many are smiling — for LIFE beats prefer genuine group joy; more smiling faces = stronger candid energy\n` +
+    `• "you're in it" — the photo contains the poster themselves; strong for LIFE and CLOSER\n` +
+    `• quality N/100 — composite sharpness/exposure/composition; prefer higher quality unless a lower one is narratively essential\n` +
+    `• capture time — order the carousel to read like the day actually unfolded; avoid temporal whiplash\n` +
+    `• near-dup X — photos sharing a "near-dup" label are visually near-identical; pick AT MOST ONE per label\n` +
+    `• ♥ favorited — the user hearted this; treat as near must-include unless a duplicate\n` +
+    `If the pool has no wide shots at all, note it in "missing".\n\n` +
 
     `━━ ORDERING ━━\n` +
     `Suggest the ideal viewing order. Hook always first. Closer always last. Build toward something.\n\n` +
@@ -202,12 +205,17 @@ export function buildRolePrompt(
     `━━ ORDERING ━━\n` +
     `Ideal swiping order. HOOK first. CLOSER last. Build toward something.\n\n` +
 
+    `━━ REASONS ━━\n` +
+    `For each photo, "reason" must justify WHY it earns its place in the carousel — ` +
+    `the moment, emotion, or quality it captures — not merely describe what it shows. ` +
+    `Write it like you're telling the user why you kept this one.\n\n` +
+
     `Respond with ONLY valid JSON:\n` +
     `{\n` +
     `  "story": "One sentence describing what this carousel tells",\n` +
     `  "selected": [\n` +
-    `    {"index": 0, "role": "hook",  "reason": "most arresting composition"},\n` +
-    `    {"index": 2, "role": "world", "reason": "wide shot establishes place"}\n` +
+    `    {"index": 0, "role": "hook",  "reason": "Stops the scroll — the light and the look pull you straight in"},\n` +
+    `    {"index": 2, "role": "world", "reason": "Sets the scene so the rest of the day has somewhere to live"}\n` +
     `  ],\n` +
     `  "ordering": [0, 2, 1, 3],\n` +
     `  "missing": "No close-up detail shot" or null\n` +

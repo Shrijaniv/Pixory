@@ -16,6 +16,48 @@ from .base import BBox, FaceAnalysis
 DEEPFACE_BACKEND = 'mtcnn'
 _HAPPY_EMOTIONS = {'happy', 'surprise'}
 
+# Minimum detector confidence for a region to count as a face.
+MIN_FACE_CONFIDENCE = 0.5
+
+# A "face" covering nearly the whole frame is DeepFace's no-face sentinel, not
+# a detection. See _is_real_face.
+WHOLE_FRAME_RATIO = 0.95
+
+
+def _is_real_face(region: dict, img_shape) -> bool:
+    """
+    Reject DeepFace's synthetic whole-frame region (audit F3).
+
+    With ``enforce_detection=False`` — which the scoring path must use, since a
+    landscape legitimately has no face — DeepFace does not return an empty list
+    when it finds nothing. It returns one entry whose region is the entire
+    image and whose ``face_confidence`` is 0. Taking ``len(results)`` as the
+    face count therefore reports exactly one face for every photo on earth.
+
+    Verified against 8 real landscape photos: all 8 reported a face before this
+    guard, none after.
+    """
+    w, h = region.get('w', 0), region.get('h', 0)
+    if w <= 0 or h <= 0:
+        return False
+
+    # Newer DeepFace exposes a confidence. When present it is authoritative and
+    # the geometry heuristic below is skipped entirely — a real close-up selfie
+    # legitimately fills the frame, and rejecting it on size would break the
+    # single most common kind of reference photo.
+    confidence = region.get('face_confidence')
+    if confidence is not None:
+        return confidence >= MIN_FACE_CONFIDENCE
+
+    # Older builds omit it, so fall back to the geometry of the sentinel: a
+    # region covering essentially the whole frame is the no-face marker.
+    img_h, img_w = img_shape[0], img_shape[1]
+    if img_w > 0 and img_h > 0:
+        if w >= img_w * WHOLE_FRAME_RATIO and h >= img_h * WHOLE_FRAME_RATIO:
+            return False
+
+    return True
+
 
 class DeepFaceEngine:
     name = 'deepface'
@@ -43,14 +85,23 @@ class DeepFaceEngine:
             )
             if isinstance(results, dict):
                 results = [results]
-            bboxes: List[BBox] = []
+
+            # Only regions that pass _is_real_face count. Previously this used
+            # len(results), which counted the no-face sentinel (audit F3).
+            real = []
             for f in results:
-                region = f.get('region', {})
-                w, h = region.get('w', 0), region.get('h', 0)
-                if w > 0 and h > 0:
-                    bboxes.append((region.get('x', 0), region.get('y', 0), w, h))
-            happy = sum(1 for f in results if f.get('dominant_emotion', '') in _HAPPY_EMOTIONS)
-            return FaceAnalysis(count=len(results), happy_count=happy, bboxes=bboxes)
+                region = dict(f.get('region', {}))
+                # face_confidence sits alongside region on some versions.
+                if 'face_confidence' in f and 'face_confidence' not in region:
+                    region['face_confidence'] = f['face_confidence']
+                if _is_real_face(region, img_bgr.shape):
+                    real.append((f, region))
+
+            bboxes: List[BBox] = [
+                (r.get('x', 0), r.get('y', 0), r.get('w', 0), r.get('h', 0)) for _, r in real
+            ]
+            happy = sum(1 for f, _ in real if f.get('dominant_emotion', '') in _HAPPY_EMOTIONS)
+            return FaceAnalysis(count=len(real), happy_count=happy, bboxes=bboxes)
         except Exception:
             gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             detected = self._face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
