@@ -14,6 +14,12 @@ export interface FaceProfile {
 export interface PhotoMetadata {
   shot_type?: 'closeup' | 'medium' | 'wide';
   group_size?: 'none' | 'solo' | 'duo' | 'group';
+  face_count?: number;        // exact number of people
+  happy_face_count?: number;  // how many are smiling/laughing
+  is_user?: boolean;          // true when the poster themselves is in the photo
+  quality?: number;           // 0–1 composite on-device quality score
+  taken_at?: number;          // capture time, ms epoch
+  dup_group?: string;         // shared label for near-duplicate photos (e.g. "A")
 }
 
 export interface CurateBody {
