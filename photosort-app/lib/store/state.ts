@@ -21,7 +21,8 @@ export interface LocalPhoto {
   width: number;
   height: number;
   fileSize?: number;      // bytes on disk — proxy for sharpness/detail
-  qualityScore: number;
+  qualityScore: number;   // ALWAYS in [0, 1] — see lib/photos/quality.ts
+  rawByteScore?: number;  // pre-normalisation byte proxy, kept for diagnostics
   faceCount?: number;     // faces detected by sidecar (set by scoreWithBackend)
   happyFaceCount?: number;
   isFavorite?: boolean;   // marked as favourite in iOS Photos
@@ -40,7 +41,13 @@ export interface LocalPhoto {
 
 export type ContentMix = 'people' | 'balanced' | 'places';
 
-/** Which on-device face model the sidecar uses (experimental A/B). */
+/**
+ * Which on-device face model the sidecar uses.
+ *
+ * Pinned to 'insightface' on main. The A/B toggle lives on a branch; the
+ * value is never restored from disk, so a preference saved by an older build
+ * cannot route a user back to the DeepFace path (audit F3).
+ */
 export type FaceEngine = 'deepface' | 'insightface';
 
 export type PersonaType =
@@ -71,6 +78,7 @@ export interface AppStore {
   storyDescription: string;
   missingBeat: string | null;
   photoRolesByUri: Record<string, StoryRole>;
+  photoReasonsByUri: Record<string, string>;
   chosenCaption: Caption | null;
   postLocation: string;
   filterByUserFace: boolean;
@@ -93,7 +101,7 @@ export const store: AppStore = {
   persona: null,
   method: 'classic',
   contentMix: 'balanced',
-  backendUrl: 'http://192.168.0.74:8000',
+  backendUrl: 'http://10.0.0.164:8000',
 
   localPhotos: [],
   selectedPhotos: [],
@@ -103,6 +111,7 @@ export const store: AppStore = {
   storyDescription: '',
   missingBeat: null,
   photoRolesByUri: {},
+  photoReasonsByUri: {},
   chosenCaption: null,
   postLocation: '',
   filterByUserFace: false,

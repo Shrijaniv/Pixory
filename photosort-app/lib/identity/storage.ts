@@ -25,6 +25,21 @@ export function embeddingForEngine(id: FaceIdentity, engine: IdentityEngine): nu
   return null;
 }
 
+/**
+ * True when a saved identity cannot be used by the engine in force.
+ *
+ * DeepFace produces 128-d Facenet vectors and InsightFace 512-d ArcFace ones;
+ * they are not interchangeable, and a cosine similarity between them is
+ * meaningless. An identity registered under the old engine therefore has to be
+ * re-registered. Previously this was surfaced as a single log line and the
+ * filter silently did nothing (audit F4), which reads to the user as "the face
+ * filter is broken".
+ */
+export function isIdentityStale(id: FaceIdentity | null, engine: IdentityEngine): boolean {
+  if (!id) return false;
+  return embeddingForEngine(id, engine) === null;
+}
+
 const IDENTITY_FILE = (FileSystem.documentDirectory ?? '') + 'pixory_identity_v1.json';
 
 export async function saveIdentity(identity: FaceIdentity): Promise<void> {

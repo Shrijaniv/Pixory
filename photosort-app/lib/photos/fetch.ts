@@ -5,6 +5,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import { LocalPhoto } from '../store/state';
 import { haversineKm } from './haversine';
+import { computeByteQuality } from './quality';
 
 // Native module — dev builds only. Falls back to getAssetInfoAsync location.
 let nativeGetAssetLocations: ((ids: string[]) => Promise<Array<{ id: string; latitude: number; longitude: number }>>) | null = null;
@@ -68,12 +69,14 @@ export async function getPhotos(options: {
         if (stat.exists) fileSize = (stat as any).size as number;
       } catch { /* size unavailable */ }
 
-      const resolution = asset.width * asset.height;
-      const bpp = fileSize ? Math.min(fileSize / resolution, 4) : 1;
-      let qualityScore = resolution * bpp;
-
       const isFavorite = (info as any).isFavorite === true;
-      if (isFavorite) qualityScore *= 2.0;
+      // Normalised to [0, 1] so scored and unscored photos share one scale.
+      // See lib/photos/quality.ts for why this is a log map.
+      const { qualityScore, rawByteScore } = computeByteQuality(
+        asset.width * asset.height,
+        fileSize,
+        isFavorite,
+      );
 
       const nativeLoc = nativeLocationMap.get(asset.id);
       const rawLat = parseFloat(info.location?.latitude as any);
@@ -93,6 +96,7 @@ export async function getPhotos(options: {
         height: asset.height,
         fileSize,
         qualityScore,
+        rawByteScore,
         isFavorite,
       });
     } catch { /* skip unavailable assets */ }

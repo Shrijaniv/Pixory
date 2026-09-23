@@ -2,8 +2,9 @@ import { StyleSheet } from 'react-native';
 import { Colors, Radius, Spacing, Typography } from '../../../lib/theme';
 import { SCREEN_W } from './types';
 
-const HERO_H = 250;
-const FILM_THUMB = 58;
+const HERO_H = 340;
+const FILM_THUMB = 72;
+const TRAY_CELL = 96;
 
 export const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.bg },
@@ -123,46 +124,71 @@ export const styles = StyleSheet.create({
   thumbActive: { borderColor: Colors.accentSolid },
   thumb: { width: '100%', height: '100%' },
 
+  // Why-chosen reason for the focused slide
+  reasonRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginHorizontal: Spacing.xl,
+    marginTop: Spacing.md,
+    backgroundColor: Colors.accentWash,
+    borderWidth: 1,
+    borderColor: Colors.accentWashBorder,
+    borderRadius: Radius.tile,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  reasonIcon: { ...Typography.bodySm, color: Colors.accentText, marginTop: 1 },
+  reasonText: { flex: 1, ...Typography.bodySm, color: Colors.text, lineHeight: 18 },
+
   // More matches tray
   traySection: { marginTop: Spacing.xl },
   trayLabel: {
     ...Typography.labelMono,
     color: Colors.textFaint,
     marginHorizontal: Spacing.xl,
+    marginBottom: 2,
+  },
+  traySubhint: {
+    ...Typography.bodySm,
+    color: Colors.textDim,
+    marginHorizontal: Spacing.xl,
     marginBottom: Spacing.md,
   },
-  trayRow: { paddingHorizontal: Spacing.xl, gap: Spacing.sm },
+  trayRow: { paddingHorizontal: Spacing.xl, gap: Spacing.md },
   trayCell: {
-    width: 50,
-    height: 50,
-    borderRadius: Radius.md,
-    overflow: 'hidden',
+    width: TRAY_CELL,
+    height: TRAY_CELL,
+    borderRadius: Radius.tile,
     backgroundColor: Colors.elevated,
   },
+  trayImageWrap: {
+    width: '100%',
+    height: '100%',
+    borderRadius: Radius.tile,
+    overflow: 'hidden',
+  },
   trayImage: { width: '100%', height: '100%' },
+  addBtnWrap: { position: 'absolute', right: 4, bottom: 4 },
   addBtn: {
-    position: 'absolute',
-    right: 2,
-    bottom: 2,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addIcon: { color: '#FFF', fontSize: 12, lineHeight: 14 },
+  addIcon: { color: '#FFF', fontSize: 16, lineHeight: 18 },
   heartBadge: {
     position: 'absolute',
-    left: 2,
-    top: 2,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    left: 4,
+    top: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heartText: { color: '#FF5A6E', fontSize: 9 },
+  heartText: { color: '#FF5A6E', fontSize: 11 },
   libraryCell: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -170,9 +196,10 @@ export const styles = StyleSheet.create({
     borderColor: Colors.lineMid,
     borderStyle: 'dashed',
     backgroundColor: 'transparent',
+    gap: 2,
   },
-  libraryIcon: { color: Colors.textMuted, fontSize: 16, lineHeight: 18 },
-  libraryText: { ...Typography.bodySm, color: Colors.textFaint, fontSize: 8 },
+  libraryIcon: { color: Colors.textMuted, fontSize: 22, lineHeight: 24 },
+  libraryText: { ...Typography.bodySm, color: Colors.textFaint, fontSize: 10 },
 
   // Footer
   footer: {
@@ -214,7 +241,7 @@ export const styles = StyleSheet.create({
   toastText: { ...Typography.bodySm, color: Colors.text },
 
   // Viewer
-  viewer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', alignItems: 'center', justifyContent: 'center' },
-  viewerImage: { width: SCREEN_W, height: '80%' },
-  viewerClose: { position: 'absolute', top: 60, right: Spacing.xl, color: '#FFF', fontSize: 24 },
+  viewer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.96)', alignItems: 'center', justifyContent: 'center', paddingVertical: 40 },
+  viewerImage: { width: SCREEN_W, height: '100%' },
+  viewerClose: { position: 'absolute', top: 56, right: Spacing.xl, color: '#FFF', fontSize: 26 },
 });
