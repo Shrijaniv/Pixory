@@ -8,7 +8,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "jest": {
     "preset": "jest-expo",
@@ -23,7 +24,27 @@
       "^expo-image-manipulator$": "<rootDir>/__mocks__/expo-image-manipulator.js",
       "^expo-file-system(/legacy)?$": "<rootDir>/__mocks__/expo-file-system.js",
       "^expo-media-library$": "<rootDir>/__mocks__/expo-media-library.js",
-      "^expo-location$": "<rootDir>/__mocks__/expo-location.js"
+      "^expo-location$": "<rootDir>/__mocks__/expo-location.js",
+      "^expo-router$": "<rootDir>/__mocks__/expo-router.js",
+      "^expo-image-picker$": "<rootDir>/__mocks__/expo-image-picker.js",
+      "^expo-secure-store$": "<rootDir>/__mocks__/expo-secure-store.js"
+    },
+    "collectCoverageFrom": [
+      "lib/**/*.ts",
+      "!lib/**/__tests__/**"
+    ],
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "json-summary"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 44,
+        "branches": 35,
+        "functions": 53,
+        "lines": 44
+      }
     }
   },
   "dependencies": {
