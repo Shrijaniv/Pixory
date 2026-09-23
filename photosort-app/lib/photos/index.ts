@@ -6,4 +6,5 @@ export * from './dedup';
 export * from './clusters';
 export * from './scoring';
 export * from './selection';
+export * from './ordering';
 export * from './encoding';
