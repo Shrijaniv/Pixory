@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { assignRoles } from '../../../lib/api';
 import { recordOutcome } from '../../../lib/learning';
+import { orderByBeats } from '../../../lib/photos';
 import { LocalPhoto, StoryRole, store } from '../../../lib/store';
 import { MAX_CAROUSEL, SelectedItem } from './types';
 
@@ -97,32 +98,30 @@ export function useReviewState() {
 
         if (!result.success || controller.signal.aborted) return;
 
-        // Apply ordering — AI indices refer to encoded photos, not `sorted` directly.
-        // Compare against encoded count (not sorted.length) to avoid silent skip when
-        // any photo fails to encode.
-        if (result.ordering && result.ordering.length === encodedSortedIndices.length) {
-          // Map AI encode index → sorted item
-          const encodedItems = encodedSortedIndices.map((si) => sorted[si]);
-          const reordered = result.ordering.map((aiIdx) => encodedItems[aiIdx]).filter(Boolean);
-          // Append any photos that failed to encode at the end so they aren't lost
-          const reorderedUris = new Set(reordered.map((item) => item.localUri));
-          const notEncoded = sorted.filter((item) => !reorderedUris.has(item.localUri));
-          const finalOrdered = [...reordered, ...notEncoded];
-          skipReorganizeRef.current = true; // AI-driven reorder — don't re-trigger the API
-          setSelected(finalOrdered.map((item, i) => ({ localUri: item.localUri, order: i + 1 })));
-          store.selectedPhotos = finalOrdered.map((item) => item.localUri);
-        }
-
-        // Update role map — AI index refers to encoded photos, map back through encodedSortedIndices
+        // Update role + reason maps — AI index refers to encoded photos.
+        // Reasons are FROZEN: keep the original "why chosen" justification; only
+        // fill one in for a newly-added photo that doesn't have one yet.
         const newRoleMap: Record<string, StoryRole> = {};
+        const newReasonMap: Record<string, string> = { ...store.photoReasonsByUri };
         (result.photo_roles ?? []).forEach((pr) => {
           const si = encodedSortedIndices[pr.index];
           if (si != null) {
             const photo = sorted[si];
-            if (photo) newRoleMap[photo.localUri] = pr.role as StoryRole;
+            if (photo) {
+              newRoleMap[photo.localUri] = pr.role as StoryRole;
+              if (pr.reason && !newReasonMap[photo.localUri]) newReasonMap[photo.localUri] = pr.reason;
+            }
           }
         });
         store.photoRolesByUri = newRoleMap;
+        store.photoReasonsByUri = newReasonMap;
+
+        // Pin hook→first, world→second, closer→last; keep the rest in their current
+        // order. Robust to the AI returning an off-length/inconsistent ordering.
+        const orderedUris = orderByBeats(sorted.map((item) => item.localUri), (uri) => newRoleMap[uri]);
+        skipReorganizeRef.current = true; // AI-driven reorder — don't re-trigger the API
+        setSelected(orderedUris.map((uri, i) => ({ localUri: uri, order: i + 1 })));
+        store.selectedPhotos = orderedUris;
 
         if (result.story) store.storyDescription = result.story;
         store.missingBeat = result.missing ?? null;
@@ -256,6 +255,7 @@ export function useReviewState() {
   const storyDesc = store.storyDescription;
   const missingBeat = store.missingBeat;
   const rolesByUri = store.photoRolesByUri;
+  const reasonsByUri = store.photoReasonsByUri;
 
   // Favorites: iOS ♥ photos not already in the top-10 or runner-up tray
   const selectedUriSet = new Set(selected.map((s) => s.localUri));
@@ -288,6 +288,7 @@ export function useReviewState() {
     storyDesc,
     missingBeat,
     rolesByUri,
+    reasonsByUri,
     favoritePhotos,
     moreMatches,
     focusedIndex,

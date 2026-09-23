@@ -7,7 +7,7 @@ import { embeddingForEngine, loadIdentity } from '../../../lib/identity';
 import { learningInsight, loadLearningHistory } from '../../../lib/learning';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { clusterSummary, deduplicateBursts, filterByLocation, getPhotos, requestPermission, scoreWithBackend, selectBestPhotos, topCandidates } from '../../../lib/photos';
+import { clusterSummary, deduplicateBursts, filterByLocation, getPhotos, orderByBeats, pHashDistance, requestPermission, scoreWithBackend, selectBestPhotos, topCandidates } from '../../../lib/photos';
 import { Caption, LocalPhoto, newStoryId, saveSession, StoryRole, store, upsertStory } from '../../../lib/store';
 import { Step, defaultCaptions } from './types';
 
@@ -37,6 +37,9 @@ export function useProcessingState() {
       // Holds the encoded reference face photo — populated in step 7 if face filter is on,
       // then forwarded to the AI call in step 8 so the AI can also exclude non-matching face photos.
       let userFaceB64: string | undefined;
+      // True once the my-face filter actually runs — lets us tell the AI which
+      // surviving face photos contain the user (non-matches were already removed).
+      let faceFilterApplied = false;
 
       // Show learning insight if enough history exists for this persona
       const learningHistory = await loadLearningHistory();
@@ -142,7 +145,21 @@ export function useProcessingState() {
       // 6. Backend scoring (OpenCV sharpness + face detection via Python sidecar)
       // Sends top 120 candidates as 512px thumbnails to /api/score_photos.
       // Falls back silently to file-size ranking if the backend is unreachable.
-      let visionScored = await scoreWithBackend(dedupedPhotos, store.backendUrl, { candidateLimit: 120, onProgress: push, contentMix: store.contentMix, persona: store.persona, faceEngine: store.faceEngine });
+      const scoring = await scoreWithBackend(dedupedPhotos, store.backendUrl, {
+        candidateLimit: 120,
+        onProgress: push,
+        contentMix: store.contentMix,
+        persona: store.persona,
+        faceEngine: store.faceEngine,
+        signal: abortRef.current.signal,
+      });
+      let visionScored = scoring.photos;
+      if (!scoring.scored) {
+        // Scoring failed. Continue on the byte-size proxy, but say so — the
+        // old code degraded silently and, with the face filter on, dropped
+        // every photo as "not face-checked" (audit F2).
+        push('⚠ Continuing without vision scoring — selection quality will be reduced. Check the backend and retry for better results.');
+      }
       if (cancelled.current) return;
 
       // 7. Face identity filter (optional — only when user has set up identity + toggle is on)
@@ -164,11 +181,16 @@ export function useProcessingState() {
 
           // Reference embedding for the active engine (deepface/insightface are not interchangeable)
           const refEmbedding = embeddingForEngine(identity, store.faceEngine);
+          if (refEmbedding) faceFilterApplied = true;
           if (!refEmbedding) {
             push(`Face filter skipped — your selfie isn't registered for the ${store.faceEngine} engine. Re-add it in face setup.`);
           }
-          // Only check photos where face_count > 0 — landscapes/food always pass
-          const facePhotos = refEmbedding ? visionScored.filter((p) => (p.faceCount ?? 0) > 0) : [];
+          // Only check photos where face_count > 0 — landscapes/food always pass.
+          // Requires scoring to have succeeded; without it faceCount is undefined
+          // for every photo and there is nothing to match against.
+          const facePhotos = refEmbedding && scoring.scored
+            ? visionScored.filter((p) => (p.faceCount ?? 0) > 0)
+            : [];
           if (refEmbedding && facePhotos.length > 0) {
             push(`Checking ${facePhotos.length} photo${facePhotos.length !== 1 ? 's' : ''} for your face...`);
             try {
@@ -212,14 +234,20 @@ export function useProcessingState() {
           }
         }
 
-        // Also drop photos with no face data (ranked below top 120, never sent to sidecar)
-        // — we can't verify whether the user appears in them, so exclude from both
-        // selection and runner-ups to prevent other people's faces slipping through.
-        const beforeUnscoredFilter = visionScored.length;
-        visionScored = visionScored.filter((p) => p.faceCount !== undefined);
-        const droppedUnscored = beforeUnscoredFilter - visionScored.length;
-        if (droppedUnscored > 0) {
-          push(`Skipped ${droppedUnscored} photo${droppedUnscored !== 1 ? 's' : ''} — not face-checked (low quality ranking)`);
+        // Drop photos with no face data (ranked below the top 120, so never sent
+        // to the sidecar) — we can't verify whether the user appears in them.
+        //
+        // ONLY safe when scoring actually succeeded. If it failed, no photo has
+        // a face count and this filter empties the entire curation (audit F2).
+        if (scoring.scored) {
+          const beforeUnscoredFilter = visionScored.length;
+          visionScored = visionScored.filter((p) => p.faceCount !== undefined);
+          const droppedUnscored = beforeUnscoredFilter - visionScored.length;
+          if (droppedUnscored > 0) {
+            push(`Skipped ${droppedUnscored} photo${droppedUnscored !== 1 ? 's' : ''} — not face-checked (ranked below the scoring cut-off)`);
+          }
+        } else {
+          push('⚠ My-face filter skipped — photos could not be scored, so no face data is available. Every photo was kept.');
         }
       }
       if (cancelled.current) return;
@@ -315,9 +343,31 @@ export function useProcessingState() {
 
         push(`Sending to ${label} via backend (${store.backendUrl})...`, 75);
         const apiStart = Date.now();
+
+        // Near-duplicate grouping from perceptual hashes — tells the AI which
+        // candidates are visually near-identical so it won't pick two of them.
+        const dupGroup = new Map<string, string>();
+        let dupLabel = 0;
+        for (let a = 0; a < topPhotos.length; a++) {
+          for (let b = a + 1; b < topPhotos.length; b++) {
+            if (pHashDistance(topPhotos[a].phash, topPhotos[b].phash) <= 6) {
+              const uA = topPhotos[a].localUri, uB = topPhotos[b].localUri;
+              const lbl = dupGroup.get(uA) ?? dupGroup.get(uB) ?? String.fromCharCode(65 + dupLabel++);
+              dupGroup.set(uA, lbl);
+              dupGroup.set(uB, lbl);
+            }
+          }
+        }
+
         const photoMetadata = topPhotos.map((p) => ({
-          shot_type: p.shotType,
-          group_size: p.groupSize,
+          shot_type:        p.shotType,
+          group_size:       p.groupSize,
+          face_count:       p.faceCount,
+          happy_face_count: p.happyFaceCount,
+          is_user:          faceFilterApplied && (p.faceCount ?? 0) > 0 ? true : undefined,
+          quality:          p.qualityScore,
+          taken_at:         p.creationTime,
+          dup_group:        dupGroup.get(p.localUri),
         }));
 
         const result = await curateDevicePhotos({
@@ -356,7 +406,7 @@ export function useProcessingState() {
         const remainder = aiSelected
           .map((p: LocalPhoto) => p.localUri)
           .filter((uri: string) => !orderedUriSet.has(uri));
-        store.selectedPhotos = [...orderedUris, ...remainder];
+        const baseOrder = [...orderedUris, ...remainder];
 
         // Runner-ups: candidates not chosen by AI (from the top pool + device extras)
         store.runnerUpPhotos = [
@@ -371,13 +421,23 @@ export function useProcessingState() {
         // Narrative fields
         store.storyDescription = result.story ?? '';
         store.missingBeat      = result.missing ?? null;
-        // Build URI → role map so the review screen can show badges without index arithmetic
+        // Build URI → role and URI → reason maps so the review screen can show
+        // each photo's beat badge AND the AI's one-line "why it was chosen".
         const roleMap: Record<string, StoryRole> = {};
+        const reasonMap: Record<string, string> = {};
         (result.photo_roles ?? []).forEach((pr: { index: number; role: string; reason: string }) => {
           const photo = topPhotos[pr.index];
-          if (photo) roleMap[photo.localUri] = pr.role as StoryRole;
+          if (photo) {
+            roleMap[photo.localUri] = pr.role as StoryRole;
+            if (pr.reason) reasonMap[photo.localUri] = pr.reason;
+          }
         });
         store.photoRolesByUri = roleMap;
+        store.photoReasonsByUri = reasonMap;
+
+        // Pin hook→first, world→second, closer→last (rest keep AI order) so the
+        // initial render already matches the beats — no reshuffle on the first edit.
+        store.selectedPhotos = orderByBeats(baseOrder, (uri) => roleMap[uri]);
 
         if (result.story) push(`Story: ${result.story}`);
         if (result.missing) push(`⚠ Missing beat: ${result.missing}`);

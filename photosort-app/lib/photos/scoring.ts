@@ -4,6 +4,10 @@
 import * as ImageManipulator from 'expo-image-manipulator';
 import { computeLearningBias, loadLearningHistory } from '../learning';
 import { ContentMix, LocalPhoto, PersonaType } from '../store/state';
+import { blendVisionScore, discountUnscored } from './quality';
+
+/** Wall-clock budget for the sidecar scoring call. */
+export const SCORING_TIMEOUT_MS = 120_000;
 
 export interface BackendPhotoScore {
   index: number;
@@ -124,10 +128,32 @@ export function computePersonaScore(score: BackendPhotoScore, persona: PersonaTy
 }
 
 /**
- * Score photos using the backend Python sidecar (OpenCV + DeepFace).
+ * Outcome of a sidecar scoring pass.
  *
- * Sends top `candidateLimit` photos as 512px JPEG thumbnails to /api/score_photos.
- * Falls back silently to existing fileSize scores if backend is unreachable.
+ * `scored` is the part callers must branch on. Previously this function
+ * returned a bare array, so a total scoring failure was indistinguishable
+ * from success with zero faces — and the my-face filter, which drops every
+ * photo lacking a face count, would silently empty the entire curation
+ * (audit F2). Callers must not apply score-dependent filters when
+ * `scored` is false.
+ */
+export interface ScoringResult {
+  /** Every input photo, scored where possible. Never shorter than the input. */
+  photos: LocalPhoto[];
+  /** True only when the sidecar returned a usable response. */
+  scored: boolean;
+  /** How many photos actually carry sidecar features. */
+  scoredCount: number;
+  /** Human-readable failure reason, present only when `scored` is false. */
+  error?: string;
+}
+
+/**
+ * Score photos using the backend Python sidecar (OpenCV + InsightFace).
+ *
+ * Sends the top `candidateLimit` photos as 512px JPEG thumbnails to
+ * /api/score_photos. On any failure the photos are returned unchanged with
+ * `scored: false` so the caller can surface it rather than degrade silently.
  */
 export async function scoreWithBackend(
   photos: LocalPhoto[],
@@ -138,13 +164,18 @@ export async function scoreWithBackend(
     contentMix?: ContentMix;
     persona?: PersonaType | null;
     faceEngine?: 'deepface' | 'insightface';
+    /** Abort the request from the caller (navigation, cancel). */
+    signal?: AbortSignal;
+    /** Wall-clock budget for the sidecar call. */
+    timeoutMs?: number;
   } = {},
-): Promise<LocalPhoto[]> {
+): Promise<ScoringResult> {
   const { candidateLimit = 120, onProgress, faceEngine } = options;
 
   if (!backendUrl) {
-    onProgress?.('⚠ No backend URL — using file-size ranking only');
-    return photos;
+    const error = 'No backend URL configured';
+    onProgress?.(`⚠ ${error} — photos cannot be scored`);
+    return { photos, scored: false, scoredCount: 0, error };
   }
 
   const sorted = [...photos].sort((a, b) => b.qualityScore - a.qualityScore);
@@ -153,10 +184,30 @@ export async function scoreWithBackend(
 
   onProgress?.(`Scoring ${candidates.length} photos (sharpness + faces via OpenCV)...`);
 
+  // Cancellation is wired up before encoding starts, for two reasons: a caller
+  // signal that is ALREADY aborted must be honoured (addEventListener never
+  // fires for those), and encoding 120 photos is slow enough that continuing
+  // after a cancel wastes real time.
+  const controller = new AbortController();
+  const onCallerAbort = () => controller.abort();
+  if (options.signal) {
+    if (options.signal.aborted) controller.abort();
+    else options.signal.addEventListener('abort', onCallerAbort);
+  }
+  const detach = () => options.signal?.removeEventListener('abort', onCallerAbort);
+
+  const abortedResult = (): ScoringResult => {
+    detach();
+    return { photos, scored: false, scoredCount: 0, error: 'Scoring cancelled' };
+  };
+
+  if (controller.signal.aborted) return abortedResult();
+
   // Encode in parallel batches of 10
   const ENCODE_BATCH = 10;
   const payload: { index: number; data_b64: string }[] = [];
   for (let start = 0; start < candidates.length; start += ENCODE_BATCH) {
+    if (controller.signal.aborted) return abortedResult();
     const batch = candidates.slice(start, start + ENCODE_BATCH);
     const results = await Promise.allSettled(
       batch.map((photo, batchIdx) =>
@@ -175,19 +226,30 @@ export async function scoreWithBackend(
   }
 
   if (payload.length === 0) {
-    onProgress?.('⚠ No photos could be encoded — using file-size ranking');
-    return photos;
+    detach();
+    const error = 'No photos could be encoded for scoring';
+    onProgress?.(`⚠ ${error}`);
+    return { photos, scored: false, scoredCount: 0, error };
   }
 
+  // Bound the request itself. Without this a dropped backend hangs the run
+  // forever (audit O6). The timer starts here, not before encoding, so slow
+  // encoding does not eat the network budget.
+  const timeoutMs = options.timeoutMs ?? SCORING_TIMEOUT_MS;
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  let scoredCount = 0;
   try {
     const resp = await fetch(`${backendUrl}/api/score_photos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ photos: payload, face_engine: faceEngine }),
+      signal: controller.signal,
     });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
     const data = await resp.json() as { scores: BackendPhotoScore[] };
+    if (!Array.isArray(data?.scores)) throw new Error('Malformed sidecar response');
     const persona = options.persona ?? null;
     let totalFaces = 0, happyFaces = 0, photosWithFaces = 0;
 
@@ -215,21 +277,37 @@ export async function scoreWithBackend(
         phash:             score.phash,
       };
 
-      // Apply persona formula, then nudge with learning bias
-      const baseScore    = candidates[i].qualityScore * (0.2 + visionScore * 0.8);
+      // Apply persona formula, then nudge with learning bias. Both inputs are
+      // in [0, 1] so the result stays on the same scale as unscored photos.
+      const baseScore    = blendVisionScore(candidates[i].qualityScore, visionScore);
       const learningBias = computeLearningBias(candidates[i], persona, learningHistory);
       candidates[i] = { ...candidates[i], qualityScore: baseScore * learningBias };
 
+      scoredCount++;
       if (score.face_count > 0) { photosWithFaces++; totalFaces += score.face_count; }
       happyFaces += score.happy_face_count ?? 0;
     }
 
     const personaLabel = persona ? ` [${persona}]` : '';
     const emotionNote  = happyFaces > 0 ? `, ${happyFaces} smiling` : '';
-    onProgress?.(`✦ Scored ${data.scores.length} photos${personaLabel} — ${photosWithFaces} with faces (${totalFaces} total${emotionNote})`);
+    onProgress?.(`✦ Scored ${scoredCount} photos${personaLabel} — ${photosWithFaces} with faces (${totalFaces} total${emotionNote})`);
   } catch (err: any) {
-    onProgress?.(`⚠ Backend scoring unavailable (${err?.message ?? 'network error'}) — using file-size ranking`);
+    const aborted = err?.name === 'AbortError';
+    const error = !aborted
+      ? `Backend scoring unavailable (${err?.message ?? 'network error'})`
+      : options.signal?.aborted
+        ? 'Scoring cancelled'
+        : `Scoring timed out after ${Math.round(timeoutMs / 1000)}s`;
+    // Loud, not silent: the caller decides whether to continue (audit F2).
+    onProgress?.(`⚠ ${error}`);
+    return { photos, scored: false, scoredCount: 0, error };
+  } finally {
+    clearTimeout(timer);
+    detach();
   }
 
-  return [...candidates, ...rest];
+  // Photos past the candidate limit were never measured, so discount them
+  // rather than letting a large unscored file outrank a measured one (L7).
+  const discounted = rest.map((p) => ({ ...p, qualityScore: discountUnscored(p.qualityScore) }));
+  return { photos: [...candidates, ...discounted], scored: true, scoredCount };
 }
