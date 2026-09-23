@@ -8,6 +8,34 @@ import { ANTHROPIC_API_KEY, CLAUDE_VISION_MODEL, OPENAI_API_KEY, OPENAI_VISION_M
 import type { AssignRolesResult, CurateResult, FaceProfile, PhotoMetadata, PhotoRole } from '../types/curateTypes';
 import { buildRolePrompt, buildSystemPrompt } from './promptBuilder';
 
+// ── Photo label ───────────────────────────────────────────────────────────────
+
+/** Capture time as a short local label. NOTE: formatted in the server's
+ *  timezone — accurate when the backend runs on the user's machine. */
+function formatTaken(ms: number): string {
+  return new Date(ms).toLocaleString('en-US', {
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  });
+}
+
+/** Build the one-line objective-metadata label that follows each photo image. */
+function buildPhotoLabel(i: number, name: string | undefined, meta: PhotoMetadata | undefined, favorited: boolean): string {
+  const parts: string[] = [];
+  if (meta?.shot_type) parts.push(meta.shot_type);
+  if (meta?.face_count != null && meta.face_count > 0) {
+    let people = `${meta.face_count} ${meta.face_count === 1 ? 'person' : 'people'}`;
+    if (meta.happy_face_count) people += `, ${meta.happy_face_count} smiling`;
+    parts.push(people);
+  }
+  if (meta?.is_user) parts.push("you're in it");
+  if (meta?.quality != null) parts.push(`quality ${Math.round(meta.quality * 100)}/100`);
+  if (meta?.taken_at) parts.push(formatTaken(meta.taken_at));
+  if (meta?.dup_group) parts.push(`near-dup ${meta.dup_group}`);
+  if (favorited) parts.push('♥ favorited');
+  const tags = parts.length ? ` — ${parts.join(' · ')}` : '';
+  return `Photo ${i}: ${name ?? `photo_${i}`}${tags}`;
+}
+
 // ── Response parsers ──────────────────────────────────────────────────────────
 
 export function parseAiResponse(text: string): Omit<CurateResult, 'success'> {
@@ -93,13 +121,7 @@ export async function curateWithClaude(
 
   for (let i = 0; i < photos.length; i++) {
     content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: photos[i] } });
-    const meta = photoMetadata?.[i];
-    const tags = [
-      meta?.shot_type ? `[${meta.shot_type.toUpperCase()}]` : '',
-      meta?.group_size && meta.group_size !== 'none' ? `[${meta.group_size.toUpperCase()}]` : '',
-      favoriteIndices?.includes(i) ? '[♥ FAVORITED]' : '',
-    ].filter(Boolean).join(' ');
-    content.push({ type: 'text', text: `Photo ${i}: ${names[i] ?? `photo_${i}`}${tags ? ` ${tags}` : ''}` });
+    content.push({ type: 'text', text: buildPhotoLabel(i, names[i], photoMetadata?.[i], !!favoriteIndices?.includes(i)) });
   }
 
   if (faceProfiles && faceProfiles.length > 0) {
@@ -110,14 +132,14 @@ export async function curateWithClaude(
     }
   }
 
-  content.push({
-    type: 'text',
-    text: buildSystemPrompt(photos.length, maxSelect, vibe, faceProfiles, favoriteIndices, contentMix, persona, !!userFaceB64),
-  });
+  // System prompt as a cacheable top-level block (prompt caching reuses it across
+  // retries / the review re-label calls instead of re-billing it every time).
+  const systemPrompt = buildSystemPrompt(photos.length, maxSelect, vibe, faceProfiles, favoriteIndices, contentMix, persona, !!userFaceB64);
 
   const response = await client.messages.create({
     model: CLAUDE_VISION_MODEL,
     max_tokens: 2048,
+    system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
     messages: [{ role: 'user', content }],
   });
 
@@ -151,13 +173,7 @@ export async function curateWithOpenAI(
 
   for (let i = 0; i < photos.length; i++) {
     imageContent.push({ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${photos[i]}`, detail: 'low' } });
-    const meta = photoMetadata?.[i];
-    const tags = [
-      meta?.shot_type ? `[${meta.shot_type.toUpperCase()}]` : '',
-      meta?.group_size && meta.group_size !== 'none' ? `[${meta.group_size.toUpperCase()}]` : '',
-      favoriteIndices?.includes(i) ? '[♥ FAVORITED]' : '',
-    ].filter(Boolean).join(' ');
-    imageContent.push({ type: 'text', text: `Photo ${i}: ${names[i] ?? `photo_${i}`}${tags ? ` ${tags}` : ''}` });
+    imageContent.push({ type: 'text', text: buildPhotoLabel(i, names[i], photoMetadata?.[i], !!favoriteIndices?.includes(i)) });
   }
 
   if (faceProfiles && faceProfiles.length > 0) {
@@ -214,11 +230,12 @@ export async function assignRolesWithClaude(
     content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: photos[i] } });
     content.push({ type: 'text', text: `Photo ${i}: ${names[i] ?? `photo_${i}`}` });
   }
-  content.push({ type: 'text', text: buildRolePrompt(photos.length, vibe, storyHint, persona) });
 
+  const rolePrompt = buildRolePrompt(photos.length, vibe, storyHint, persona);
   const response = await client.messages.create({
     model: CLAUDE_VISION_MODEL,
     max_tokens: 1024,
+    system: [{ type: 'text', text: rolePrompt, cache_control: { type: 'ephemeral' } }],
     messages: [{ role: 'user', content }],
   });
 
@@ -240,13 +257,15 @@ export async function assignRolesWithOpenAI(
     content.push({ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${photos[i]}`, detail: 'low' } });
     content.push({ type: 'text', text: `Photo ${i}: ${names[i] ?? `photo_${i}`}` });
   }
-  content.push({ type: 'text', text: buildRolePrompt(photos.length, vibe, storyHint, persona) });
 
   const response = await client.chat.completions.create({
     model: OPENAI_VISION_MODEL,
     max_tokens: 1024,
     response_format: { type: 'json_object' },
-    messages: [{ role: 'user', content }],
+    messages: [
+      { role: 'system', content: buildRolePrompt(photos.length, vibe, storyHint, persona) },
+      { role: 'user', content },
+    ],
   });
 
   if (response.choices[0]?.finish_reason === 'content_filter') {

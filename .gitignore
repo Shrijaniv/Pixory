@@ -70,3 +70,6 @@ pixory_session_v1.json
 pixory_photo_cache_v1.json
 pixory_preferences_v1.json
 pixory_curations_v1.json
+
+# Test fixtures — real photos, never commit
+fixtures/
