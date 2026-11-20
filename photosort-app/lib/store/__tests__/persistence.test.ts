@@ -66,6 +66,54 @@ describe('faceEngine is never restored (audit F3)', () => {
   });
 });
 
+describe('the backend URL is the user\'s to set (audit O4)', () => {
+  it.each([
+    ['localhost, which is correct on a simulator', 'http://localhost:8000'],
+    ['loopback', 'http://127.0.0.1:8000'],
+    ['a LAN address', 'http://192.168.1.22:8000'],
+    ['a tunnel', 'https://odd-name.trycloudflare.com'],
+    ['a deployed host', 'https://pixory.up.railway.app'],
+  ])('restores %s verbatim', async (_label, url) => {
+    seed({ backendUrl: url });
+
+    await loadPersistedPrefs();
+
+    expect(store.backendUrl).toBe(url);
+  });
+
+  it('never rewrites a stored URL back to the built-in default', async () => {
+    // The old code replaced anything containing localhost / 127.0.0.1 /
+    // railway.app with a LAN address committed to the repo, overwriting a
+    // setting the user had deliberately entered.
+    seed({ backendUrl: 'http://localhost:8000' });
+
+    await loadPersistedPrefs();
+    await persistPrefs();
+
+    expect(JSON.parse(fs.get(PREFS_FILE)!).backendUrl).toBe('http://localhost:8000');
+  });
+
+  it('defaults to empty rather than to someone else\'s machine', () => {
+    expect(DEFAULTS.backendUrl).toBe('');
+  });
+
+  it('leaves the default alone when nothing is stored', async () => {
+    seed({ method: 'classic' });
+
+    await loadPersistedPrefs();
+
+    expect(store.backendUrl).toBe('');
+  });
+
+  it('ignores a non-string stored value', async () => {
+    seed({ backendUrl: 12345 });
+
+    await loadPersistedPrefs();
+
+    expect(store.backendUrl).toBe('');
+  });
+});
+
 describe('loadPersistedPrefs', () => {
   it('does nothing when no preferences file exists', async () => {
     await loadPersistedPrefs();

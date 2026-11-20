@@ -2,11 +2,11 @@ import "dotenv/config";
 
 // ── AI Model Constants ──────────────────────────────────────────────────────
 // Opus for vision curation (sending photos, selecting best, writing captions)
-export const CLAUDE_VISION_MODEL = "claude-opus-4-5";
+export const CLAUDE_VISION_MODEL = process.env.CLAUDE_VISION_MODEL ?? "claude-opus-4-5";
 // Sonnet for agent tool-use loop (desktop pipeline)
 export const CLAUDE_AGENT_MODEL = "claude-sonnet-4-5";
 // GPT-4o for OpenAI vision path
-export const OPENAI_VISION_MODEL = "gpt-4o";
+export const OPENAI_VISION_MODEL = process.env.OPENAI_VISION_MODEL ?? "gpt-4o";
 
 // ── API Keys ────────────────────────────────────────────────────────────────
 export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ?? "";

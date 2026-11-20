@@ -101,7 +101,11 @@ export const store: AppStore = {
   persona: null,
   method: 'classic',
   contentMix: 'balanced',
-  backendUrl: 'http://10.0.0.164:8000',
+  // Empty by default. A committed LAN address is wrong for everyone except
+  // the machine it was captured on, and the previous value was a developer's
+  // own IP that shipped in the repo (audit O4). Set it in Profile > Settings,
+  // or supply EXPO_PUBLIC_BACKEND_URL at build time.
+  backendUrl: process.env.EXPO_PUBLIC_BACKEND_URL ?? '',
 
   localPhotos: [],
   selectedPhotos: [],
