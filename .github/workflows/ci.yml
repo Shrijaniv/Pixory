@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Mobile app (jest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: photosort-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: photosort-app/package-lock.json
+      - run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Test with coverage
+        run: npm run test:coverage
+
+  backend:
+    name: Backend (vitest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Test with coverage
+        run: npm run test:coverage
+
+  sidecar:
+    name: Sidecar (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install runtime + test deps
+        # The ML engines (insightface, deepface, onnxruntime) are deliberately
+        # excluded: they pull ~2GB and need model weights. Tests that require
+        # them are marked `models` and deselected below.
+        run: |
+          pip install fastapi uvicorn pydantic httpx \
+                      opencv-python-headless numpy Pillow ImageHash \
+                      instagrapi pytest pytest-cov
+      - name: Test with coverage
+        run: pytest -m "not models"

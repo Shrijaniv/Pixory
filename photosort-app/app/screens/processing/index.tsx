@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +10,7 @@ import { styles } from './styles';
 
 export default function ProcessingScreen() {
   const insets = useSafeAreaInsets();
-  const { steps, error, progress, scrollRef, handleCancel } = useProcessingState();
+  const { steps, error, progress, scrollRef, handleCancel, staleIdentity } = useProcessingState();
 
   const spin = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -31,6 +32,21 @@ export default function ProcessingScreen() {
         <Text style={styles.headerTitle}>Curating</Text>
         <View style={{ width: 60 }} />
       </View>
+
+      {staleIdentity ? (
+        <View style={styles.staleBox}>
+          <Text style={styles.staleTitle}>Your saved selfie needs updating</Text>
+          <Text style={styles.staleMsg}>
+            It was registered with an older face model, so the my-face filter can&apos;t use it.
+            This run keeps every photo.
+          </Text>
+          <PrimaryButton
+            label="Add your selfie again"
+            variant="secondary"
+            onPress={() => router.push('/face-setup')}
+          />
+        </View>
+      ) : null}
 
       {error ? (
         <View style={styles.errorBox}>

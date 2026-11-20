@@ -18,9 +18,8 @@ export default function ReviewScreen() {
     tooMany,
     canNext,
     sortedSelected,
-    isAiMode,
-    storyDesc,
     rolesByUri,
+    reasonsByUri,
     moreMatches,
     focusedIndex,
     setFocusedIndex,
@@ -31,10 +30,11 @@ export default function ReviewScreen() {
     handleNext,
   } = useReviewState();
 
-  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerUri, setViewerUri] = useState<string | null>(null);
   const focusIdx = Math.min(focusedIndex, Math.max(0, sortedSelected.length - 1));
   const focused = sortedSelected[focusIdx];
   const focusedRole = focused ? rolesByUri[focused.localUri] : undefined;
+  const focusedReason = focused ? reasonsByUri[focused.localUri] : undefined;
 
   // Reorder by swapping the focused slide with its neighbour (no AI re-label).
   function move(dir: -1 | 1) {
@@ -60,18 +60,6 @@ export default function ReviewScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 90 }}>
-        {/* Story banner */}
-        {isAiMode && (storyDesc || isReorganizing) ? (
-          <View style={styles.storyBanner}>
-            {isReorganizing
-              ? <ActivityIndicator size="small" color="#FFAE3D" />
-              : <Text style={styles.storyIcon}>🎬</Text>}
-            <Text style={[styles.storyText, isReorganizing && { opacity: 0.5 }]} numberOfLines={2}>
-              {isReorganizing ? 'Reorganizing story arc…' : storyDesc}
-            </Text>
-          </View>
-        ) : null}
-
         {/* Focused hero */}
         {focused && (
           <View style={styles.heroWrap}>
@@ -80,7 +68,7 @@ export default function ReviewScreen() {
               <Text style={styles.orderText}>{focusIdx + 1}</Text>
             </LinearGradient>
             <View style={styles.heroTopRight}>
-              <Pressable style={styles.heroIconBtn} onPress={() => setViewerOpen(true)} hitSlop={8}>
+              <Pressable style={styles.heroIconBtn} onPress={() => setViewerUri(focused.localUri)} hitSlop={8}>
                 <Text style={styles.expandIcon}>⤢</Text>
               </Pressable>
               <Pressable style={styles.heroIconBtn} onPress={() => deselect(focused.localUri)} hitSlop={8}>
@@ -108,6 +96,18 @@ export default function ReviewScreen() {
           </View>
         )}
 
+        {/* Why this photo was chosen — or the live re-label status */}
+        {isReorganizing || focusedReason ? (
+          <View style={styles.reasonRow}>
+            {isReorganizing
+              ? <ActivityIndicator size="small" color="#FFAE3D" />
+              : <Text style={styles.reasonIcon}>✦</Text>}
+            <Text style={[styles.reasonText, isReorganizing && { opacity: 0.6 }]} numberOfLines={2}>
+              {isReorganizing ? 'Reorganizing the story arc…' : focusedReason}
+            </Text>
+          </View>
+        ) : null}
+
         {/* Filmstrip */}
         <Text style={styles.hint}>Tap to focus · ◂ ▸ to reorder</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filmstrip}>
@@ -122,30 +122,35 @@ export default function ReviewScreen() {
           ))}
         </ScrollView>
 
-        {/* More matches */}
-        {moreMatches.length > 0 && (
-          <View style={styles.traySection}>
-            <Text style={styles.trayLabel}>More matches</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.trayRow}>
+        {/* More matches (always shown so the Library add is reachable, e.g. resumed drafts) */}
+        <View style={styles.traySection}>
+          <Text style={styles.trayLabel}>{moreMatches.length > 0 ? 'More matches' : 'Add photos'}</Text>
+          <Text style={styles.traySubhint}>
+            {moreMatches.length > 0 ? 'Tap to preview · ＋ to add' : 'Add more from your library'}
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.trayRow}>
               {moreMatches.map((photo) => (
-                <Pressable key={photo.localUri} style={styles.trayCell} onPress={() => promote(photo)}>
-                  <Image source={{ uri: photo.localUri }} style={styles.trayImage} contentFit="cover" cachePolicy="memory-disk" transition={100} />
+                <View key={photo.localUri} style={styles.trayCell}>
+                  <Pressable style={styles.trayImageWrap} onPress={() => setViewerUri(photo.localUri)}>
+                    <Image source={{ uri: photo.localUri }} style={styles.trayImage} contentFit="cover" cachePolicy="memory-disk" transition={100} />
+                  </Pressable>
                   {photo.isFavorite ? (
                     <View style={styles.heartBadge}><Text style={styles.heartText}>♥</Text></View>
                   ) : null}
-                  <LinearGradient colors={Gradients.accent} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.addBtn}>
-                    <Text style={styles.addIcon}>＋</Text>
-                  </LinearGradient>
-                </Pressable>
+                  <Pressable style={styles.addBtnWrap} onPress={() => promote(photo)} hitSlop={6}>
+                    <LinearGradient colors={Gradients.accent} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.addBtn}>
+                      <Text style={styles.addIcon}>＋</Text>
+                    </LinearGradient>
+                  </Pressable>
+                </View>
               ))}
-              {/* Add from library */}
-              <Pressable style={[styles.trayCell, styles.libraryCell]} onPress={pickFromLibrary}>
-                <Text style={styles.libraryIcon}>＋</Text>
-                <Text style={styles.libraryText}>Library</Text>
-              </Pressable>
-            </ScrollView>
-          </View>
-        )}
+            {/* Add from library */}
+            <Pressable style={[styles.trayCell, styles.libraryCell]} onPress={pickFromLibrary}>
+              <Text style={styles.libraryIcon}>＋</Text>
+              <Text style={styles.libraryText}>Library</Text>
+            </Pressable>
+          </ScrollView>
+        </View>
       </ScrollView>
 
       {/* Footer */}
@@ -167,10 +172,10 @@ export default function ReviewScreen() {
       )}
       {toastMsg ? <View style={styles.toast}><Text style={styles.toastText}>{toastMsg}</Text></View> : null}
 
-      {/* Full-screen viewer */}
-      <Modal visible={viewerOpen} transparent animationType="fade" onRequestClose={() => setViewerOpen(false)}>
-        <Pressable style={styles.viewer} onPress={() => setViewerOpen(false)}>
-          {focused && <Image source={{ uri: focused.localUri }} style={styles.viewerImage} contentFit="contain" />}
+      {/* Full-screen viewer (focused slide or any tray photo) */}
+      <Modal visible={!!viewerUri} transparent animationType="fade" onRequestClose={() => setViewerUri(null)}>
+        <Pressable style={styles.viewer} onPress={() => setViewerUri(null)}>
+          {viewerUri && <Image source={{ uri: viewerUri }} style={styles.viewerImage} contentFit="contain" />}
           <Text style={styles.viewerClose}>✕</Text>
         </Pressable>
       </Modal>

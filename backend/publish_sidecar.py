@@ -10,6 +10,7 @@ Start: python publish_sidecar.py
 
 import base64
 import tempfile
+import time
 from pathlib import Path
 from typing import List
 
@@ -258,6 +259,8 @@ def score_photos(req: ScoreRequest):
     Per-photo errors return a neutral score so one bad image never fails the batch.
     """
     results: List[PhotoScore] = []
+    started = time.time()
+    face_seconds = 0.0
     try:
         engine = get_engine(req.face_engine)
     except Exception as e:
@@ -287,7 +290,9 @@ def score_photos(req: ScoreRequest):
             # Face count + emotion + bounding boxes via the selected engine.
             # (DeepFace handles its own Haar fallback internally; InsightFace uses SCRFD.)
             if engine is not None:
+                face_started = time.time()
                 analysis = engine.analyze(img)
+                face_seconds += time.time() - face_started
                 face_count = analysis.count
                 happy_face_count = analysis.happy_count
                 face_bboxes = analysis.bboxes  # list of (x, y, w, h)
@@ -383,6 +388,16 @@ def score_photos(req: ScoreRequest):
                 shot_type='wide', subject_ratio=0.0, group_size='none', phash=None,
             ))
 
+    # Timing is logged per batch so a regression in the face path is visible
+    # rather than only showing up as a proxy timeout on the phone (audit F1).
+    elapsed = time.time() - started
+    if req.photos:
+        print(
+            f"[sidecar] score_photos: {len(req.photos)} photos in {elapsed:.1f}s "
+            f"({elapsed / len(req.photos):.3f}s each; faces {face_seconds:.1f}s, "
+            f"{face_seconds / elapsed * 100:.0f}% of total)"
+        )
+
     return ScoreResult(scores=results)
 
 
@@ -442,6 +457,7 @@ def match_faces(req: MatchFaceRequest):
     ref = np.array(req.reference_embedding)
     ref_norm = np.linalg.norm(ref)
     results = []
+    started = time.time()
 
     for photo in req.photos:
         try:
@@ -480,6 +496,15 @@ def match_faces(req: MatchFaceRequest):
             print(f"[sidecar] match_faces error for index {photo.index}: {e}")
             # Fail-open on any per-photo error
             results.append(MatchFaceResultItem(index=photo.index, user_face_present=True, similarity=0.5))
+
+    elapsed = time.time() - started
+    if req.photos:
+        matched = sum(1 for r in results if r.user_face_present)
+        print(
+            f"[sidecar] match_faces: {len(req.photos)} photos in {elapsed:.1f}s "
+            f"({elapsed / len(req.photos):.2f}s each), {matched} matched at "
+            f"threshold {threshold:.2f}"
+        )
 
     return MatchFaceResult(matches=results)
 

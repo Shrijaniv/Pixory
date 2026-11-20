@@ -3,7 +3,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { assignRoles } from '../../../lib/api';
-import { recordOutcome } from '../../../lib/learning';
+import { recordOutcomes, resolveOutcomes } from '../../../lib/learning';
+import { orderByBeats } from '../../../lib/photos';
 import { LocalPhoto, StoryRole, store } from '../../../lib/store';
 import { MAX_CAROUSEL, SelectedItem } from './types';
 
@@ -97,32 +98,30 @@ export function useReviewState() {
 
         if (!result.success || controller.signal.aborted) return;
 
-        // Apply ordering — AI indices refer to encoded photos, not `sorted` directly.
-        // Compare against encoded count (not sorted.length) to avoid silent skip when
-        // any photo fails to encode.
-        if (result.ordering && result.ordering.length === encodedSortedIndices.length) {
-          // Map AI encode index → sorted item
-          const encodedItems = encodedSortedIndices.map((si) => sorted[si]);
-          const reordered = result.ordering.map((aiIdx) => encodedItems[aiIdx]).filter(Boolean);
-          // Append any photos that failed to encode at the end so they aren't lost
-          const reorderedUris = new Set(reordered.map((item) => item.localUri));
-          const notEncoded = sorted.filter((item) => !reorderedUris.has(item.localUri));
-          const finalOrdered = [...reordered, ...notEncoded];
-          skipReorganizeRef.current = true; // AI-driven reorder — don't re-trigger the API
-          setSelected(finalOrdered.map((item, i) => ({ localUri: item.localUri, order: i + 1 })));
-          store.selectedPhotos = finalOrdered.map((item) => item.localUri);
-        }
-
-        // Update role map — AI index refers to encoded photos, map back through encodedSortedIndices
+        // Update role + reason maps — AI index refers to encoded photos.
+        // Reasons are FROZEN: keep the original "why chosen" justification; only
+        // fill one in for a newly-added photo that doesn't have one yet.
         const newRoleMap: Record<string, StoryRole> = {};
+        const newReasonMap: Record<string, string> = { ...store.photoReasonsByUri };
         (result.photo_roles ?? []).forEach((pr) => {
           const si = encodedSortedIndices[pr.index];
           if (si != null) {
             const photo = sorted[si];
-            if (photo) newRoleMap[photo.localUri] = pr.role as StoryRole;
+            if (photo) {
+              newRoleMap[photo.localUri] = pr.role as StoryRole;
+              if (pr.reason && !newReasonMap[photo.localUri]) newReasonMap[photo.localUri] = pr.reason;
+            }
           }
         });
         store.photoRolesByUri = newRoleMap;
+        store.photoReasonsByUri = newReasonMap;
+
+        // Pin hook→first, world→second, closer→last; keep the rest in their current
+        // order. Robust to the AI returning an off-length/inconsistent ordering.
+        const orderedUris = orderByBeats(sorted.map((item) => item.localUri), (uri) => newRoleMap[uri]);
+        skipReorganizeRef.current = true; // AI-driven reorder — don't re-trigger the API
+        setSelected(orderedUris.map((uri, i) => ({ localUri: uri, order: i + 1 })));
+        store.selectedPhotos = orderedUris;
 
         if (result.story) store.storyDescription = result.story;
         store.missingBeat = result.missing ?? null;
@@ -161,19 +160,16 @@ export function useReviewState() {
     const photo = store.localPhotos.find((p) => p.localUri === uri);
     if (photo) {
       setRunnerUps((prev) => [photo, ...prev.filter((p) => p.localUri !== uri)]);
-      // Record as a rejection only if the algorithm/AI originally selected this photo
-      if (initialSelectionRef.current.has(uri)) {
-        recordOutcome(photo, 'rejected', store.persona);
-      }
     }
+    // Nothing is learned here. Outcomes are derived from the FINAL selection in
+    // handleNext, so toggling a photo any number of times records once (L5).
   }
 
   function promote(photo: LocalPhoto) {
     if (selected.length >= MAX_CAROUSEL) { showToast('Deselect a photo above first (max 10)'); return; }
     setSelected((prev) => [...prev, { localUri: photo.localUri, order: prev.length + 1 }]);
     setRunnerUps((prev) => prev.filter((p) => p.localUri !== photo.localUri));
-    // Record as a promotion — user explicitly chose something the algorithm deprioritised
-    recordOutcome(photo, 'promoted', store.persona);
+    // See deselect(): learning is resolved from the final selection, not here.
   }
 
   /** Apply a new order from the draggable filmstrip (does NOT trigger AI re-label). */
@@ -229,16 +225,19 @@ export function useReviewState() {
       return true;
     });
 
-    // Learn from the KEPT picks: photos the AI selected and the user accepted
-    // (left in the carousel) are a strong approval signal. Tray-added photos were
-    // already recorded by promote(); removed ones by deselect(). Record once per visit.
+    // Learn from the final selection compared with what was proposed. Doing it
+    // here, once, rather than on each edit is what makes the result independent
+    // of how much the user fiddled (audit L1 and L5). Photos with no sidecar
+    // measurements are skipped rather than recorded with defaults (L4).
     if (!recordedKeptRef.current) {
       recordedKeptRef.current = true;
-      for (const item of ordered) {
-        if (!initialSelectionRef.current.has(item.localUri)) continue; // skip user-added (already recorded)
-        const photo = store.localPhotos.find((p) => p.localUri === item.localUri);
-        if (photo) recordOutcome(photo, 'promoted', store.persona);
-      }
+      const outcomes = resolveOutcomes(
+        store.selectedPhotos,
+        initialSelectionRef.current,
+        (uri) => store.localPhotos.find((p) => p.localUri === uri),
+      );
+      // Fire-and-forget: a learning failure must never block the flow.
+      recordOutcomes(outcomes, store.persona);
     }
 
     router.push('/caption');
@@ -256,6 +255,7 @@ export function useReviewState() {
   const storyDesc = store.storyDescription;
   const missingBeat = store.missingBeat;
   const rolesByUri = store.photoRolesByUri;
+  const reasonsByUri = store.photoReasonsByUri;
 
   // Favorites: iOS ♥ photos not already in the top-10 or runner-up tray
   const selectedUriSet = new Set(selected.map((s) => s.localUri));
@@ -288,6 +288,7 @@ export function useReviewState() {
     storyDesc,
     missingBeat,
     rolesByUri,
+    reasonsByUri,
     favoritePhotos,
     moreMatches,
     focusedIndex,

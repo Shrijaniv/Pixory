@@ -3,7 +3,7 @@
  * with temporal spread and proportional cluster representation.
  */
 import { LocalPhoto, PersonaType } from '../store/state';
-import { ActivityCluster, buildActivityClusters } from './clusters';
+import { buildActivityClusters } from './clusters';
 
 // ── Shot type balance ─────────────────────────────────────────────────────────
 
@@ -140,11 +140,11 @@ export function topCandidates(
     if (!selectedIds.has(p.id)) { selected.push(p); selectedIds.add(p.id); }
   }
 
-  // Storyteller diversity bonus: sole representative of a cluster gets +10%
-  if (persona === 'storyteller') {
-    applyDiversityBonus(selected, clusters);
-  }
-
+  // A "storyteller diversity bonus" used to run here, multiplying the score of
+  // sole cluster representatives by 1.10. It was dead code: it mutated scores
+  // AFTER selection was final and immediately before a sort by creationTime,
+  // so nothing ever read the result (audit O5). Embedding-space diversity in
+  // the retrieval stage replaces the intent — see docs/architecture-v2.md 5.3.
   return selected.sort((a, b) => a.creationTime - b.creationTime);
 }
 
@@ -225,26 +225,3 @@ export function selectBestPhotos(
   return { selected, runnerUps };
 }
 
-// ── Shared helpers ────────────────────────────────────────────────────────────
-
-function applyDiversityBonus(selected: LocalPhoto[], clusters: ActivityCluster[]): void {
-  const clusterRepCount = new Map<string, number>();
-  for (const cluster of clusters) {
-    const key = cluster.photos[0].id;
-    let count = 0;
-    for (const photo of selected) {
-      if (cluster.photos.some((p) => p.id === photo.id)) count++;
-    }
-    clusterRepCount.set(key, count);
-  }
-  for (let i = 0; i < selected.length; i++) {
-    for (const cluster of clusters) {
-      if (cluster.photos.some((p) => p.id === selected[i].id)) {
-        if ((clusterRepCount.get(cluster.photos[0].id) ?? 1) === 1) {
-          selected[i] = { ...selected[i], qualityScore: selected[i].qualityScore * 1.10 };
-        }
-        break;
-      }
-    }
-  }
-}
