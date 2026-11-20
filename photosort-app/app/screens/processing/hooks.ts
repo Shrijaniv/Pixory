@@ -3,11 +3,11 @@ import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, ScrollView } from 'react-native';
 import { curateDevicePhotos, matchFaces } from '../../../lib/api';
-import { embeddingForEngine, isIdentityStale, loadIdentity } from '../../../lib/identity';
+import { confirmedUserUris, embeddingForEngine, isIdentityStale, loadIdentity } from '../../../lib/identity';
 import { learningInsight, loadLearningHistory } from '../../../lib/learning';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { clusterSummary, deduplicateBursts, filterByLocation, getPhotos, orderByBeats, pHashDistance, requestPermission, scoreWithBackend, selectBestPhotos, topCandidates } from '../../../lib/photos';
+import { buildDupGroups, clusterSummary, deduplicateBursts, filterByLocation, getPhotos, orderByBeats, requestPermission, scoreWithBackend, selectBestPhotos, topCandidates } from '../../../lib/photos';
 import { Caption, LocalPhoto, newStoryId, saveSession, StoryRole, store, upsertStory } from '../../../lib/store';
 import { Step, defaultCaptions } from './types';
 
@@ -39,9 +39,16 @@ export function useProcessingState() {
       // Holds the encoded reference face photo — populated in step 7 if face filter is on,
       // then forwarded to the AI call in step 8 so the AI can also exclude non-matching face photos.
       let userFaceB64: string | undefined;
-      // True once the my-face filter actually runs — lets us tell the AI which
-      // surviving face photos contain the user (non-matches were already removed).
-      let faceFilterApplied = false;
+      // URIs the face matcher positively confirmed as containing the user.
+      //
+      // Deliberately NOT "the filter ran". Previously a single flag was set as
+      // soon as a reference embedding existed, and every surviving face photo
+      // was then labelled `is_user: true` for the AI. If encoding or the match
+      // request failed, the catch kept all the photos and they were all still
+      // asserted to contain the user — so the prompt told the model "you're in
+      // it" about photos of other people, which is the exact outcome the
+      // my-face filter exists to prevent. Only a positive match belongs here.
+      const userConfirmedUris = new Set<string>();
 
       // Show learning insight if enough history exists for this persona
       const learningHistory = await loadLearningHistory();
@@ -186,7 +193,6 @@ export function useProcessingState() {
           // similarity between them is meaningless, so a selfie registered
           // under the old engine cannot be reused.
           const refEmbedding = embeddingForEngine(identity, store.faceEngine);
-          if (refEmbedding) faceFilterApplied = true;
           if (isIdentityStale(identity, store.faceEngine)) {
             // Previously a single log line, so the filter silently did nothing
             // and the user saw other people's photos survive (audit F4).
@@ -228,6 +234,13 @@ export function useProcessingState() {
                   .map((m) => facePhotos[m.index]?.localUri)
                   .filter(Boolean) as string[]
               );
+
+              // Record only confirmed matches. A photo whose encode failed is
+              // never sent, so it appears in neither set and is correctly left
+              // unasserted rather than assumed to contain the user.
+              for (const uri of confirmedUserUris(result.matches, facePhotos)) {
+                userConfirmedUris.add(uri);
+              }
 
               const beforeCount = visionScored.length;
               visionScored = visionScored.filter((p) => !noMatchUris.has(p.localUri));
@@ -355,25 +368,17 @@ export function useProcessingState() {
 
         // Near-duplicate grouping from perceptual hashes — tells the AI which
         // candidates are visually near-identical so it won't pick two of them.
-        const dupGroup = new Map<string, string>();
-        let dupLabel = 0;
-        for (let a = 0; a < topPhotos.length; a++) {
-          for (let b = a + 1; b < topPhotos.length; b++) {
-            if (pHashDistance(topPhotos[a].phash, topPhotos[b].phash) <= 6) {
-              const uA = topPhotos[a].localUri, uB = topPhotos[b].localUri;
-              const lbl = dupGroup.get(uA) ?? dupGroup.get(uB) ?? String.fromCharCode(65 + dupLabel++);
-              dupGroup.set(uA, lbl);
-              dupGroup.set(uB, lbl);
-            }
-          }
-        }
+        // Union-find, so a pair that bridges two existing groups merges them
+        // whole; relabelling just the two endpoints used to split components
+        // and let a known duplicate pair through. See lib/photos/dupGroups.ts.
+        const dupGroup = buildDupGroups(topPhotos);
 
         const photoMetadata = topPhotos.map((p) => ({
           shot_type:        p.shotType,
           group_size:       p.groupSize,
           face_count:       p.faceCount,
           happy_face_count: p.happyFaceCount,
-          is_user:          faceFilterApplied && (p.faceCount ?? 0) > 0 ? true : undefined,
+          is_user:          userConfirmedUris.has(p.localUri) ? true : undefined,
           quality:          p.qualityScore,
           taken_at:         p.creationTime,
           dup_group:        dupGroup.get(p.localUri),
